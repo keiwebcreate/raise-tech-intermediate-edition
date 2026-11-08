@@ -24,6 +24,13 @@ repositories {
 ext {
 	mybatisStarterVersion = '4.1.0'  // Spring Boot 4 対応（2026-11-08 に最新を確認）
 	jjwtVersion = '0.13.0'           // JWT を作る・確かめる道具（講義と同じ jjwt。2026-11-08 に最新を確認）
+	// 以下は画像・動画の投稿で足した道具（どれも 2026-11-08 に Maven Central で最新を確認）
+	awsSdkVersion = '2.57.11'        // AWS SDK for Java 2（S3 の読み書き・期限付き URL）
+	thumbnailatorVersion = '0.4.21'  // 画像の縮小。写真の向き（Exif の Orientation）も直す
+	twelvemonkeysVersion = '3.15.3'  // Java の画像の読み込み（ImageIO）で WebP を読めるようにする
+	webpImageioVersion = '0.11.0'    // ImageIO で WebP を書けるようにする（中に libwebp が入っている）
+	metadataExtractorVersion = '2.22.0' // MP4 の長さ・圧縮の種類を読む
+	s3mockVersion = '5.2.3'          // テストで S3 の代わりに動かす Adobe S3Mock
 }
 
 dependencies {
@@ -39,6 +46,13 @@ dependencies {
 	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
 	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 	runtimeOnly 'org.postgresql:postgresql'
+	// 画像・動画は S3 に保存する（開発・テストは S3Mock）
+	implementation platform("software.amazon.awssdk:bom:${awsSdkVersion}")
+	implementation 'software.amazon.awssdk:s3'
+	implementation "net.coobird:thumbnailator:${thumbnailatorVersion}"
+	implementation "com.twelvemonkeys.imageio:imageio-webp:${twelvemonkeysVersion}"
+	implementation "com.github.usefulness:webp-imageio:${webpImageioVersion}"
+	implementation "com.drewnoakes:metadata-extractor:${metadataExtractorVersion}"
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
@@ -49,11 +63,17 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
 	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testImplementation "com.adobe.testing:s3mock-testcontainers:${s3mockVersion}"
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+// WebP を書く道具（webp-imageio）は、C 言語の部品（libwebp）を読み込む。Java 25 では許可を書かないと警告が出て、
+// いずれ止められるので、テスト・開発の起動・本番の jar のどれでも、はっきり許す
+def nativeAccess = '--enable-native-access=ALL-UNNAMED'
+
 tasks.named('test') {
 	useJUnitPlatform()
+	jvmArgs nativeAccess
 	// テストのときは application-test.yml も読み込む（テスト専用の JWT の鍵など。環境変数がなくても動く）
 	systemProperty 'spring.profiles.active', 'test'
 }
@@ -61,6 +81,14 @@ tasks.named('test') {
 // 開発での起動（.\gradlew.bat bootRun）では、開発用の設定 application-dev.yml も読み込む
 tasks.named('bootRun') {
 	systemProperty 'spring.profiles.active', 'dev'
+	jvmArgs nativeAccess
+}
+
+// 本番（java -jar で起動）用。jar の目録（MANIFEST）に書くと、起動のときに付けなくてよい
+tasks.named('bootJar') {
+	manifest {
+		attributes 'Enable-Native-Access': 'ALL-UNNAMED'
+	}
 }
 
 // Checkstyle：書き方のチェック。規則は config/checkstyle/checkstyle.xml（トレロ風アプリからコピー）

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+	post_media テーブルの SQL（PostMediaMapper.java）。
+	値は必ず #{} で渡す（${} は使わない）。SELECT * は使わず、必要な列を書く。
+-->
+<mapper namespace="io.github.keiwebcreate.raisetechtimeline.post.PostMediaMapper">
+
+	<!-- IN (?, ?, ...) の ? の数は、foreach が postIds の数だけ作る（値は #{} で渡すので安全） -->
+	<select id="findByPostIds" resultType="io.github.keiwebcreate.raisetechtimeline.post.PostMedia">
+		SELECT m.post_id, m.media_type, m.s3_key, m.position
+		FROM post_media m
+		WHERE m.post_id IN
+		<foreach collection="postIds" item="postId" open="(" separator="," close=")">
+			#{postId}
+		</foreach>
+		ORDER BY m.post_id, m.position
+	</select>
+
+	<insert id="insert">
+		INSERT INTO post_media (post_id, media_type, s3_key, position)
+		VALUES (#{postId}, #{mediaType}, #{s3Key}, #{position})
+	</insert>
+
+	<delete id="deleteByPostId">
+		DELETE FROM post_media
+		WHERE post_id = #{postId}
+	</delete>
+
+</mapper>

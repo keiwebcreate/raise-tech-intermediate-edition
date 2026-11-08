@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import io.github.keiwebcreate.raisetechtimeline.auth.AuthCookies;
@@ -42,6 +43,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	private static final String MESSAGE_CSRF = "通信に失敗しました。画面を再読み込みしてください";
 	private static final String MESSAGE_NOT_FOUND = "ページが見つかりません";
 	private static final String MESSAGE_INTERNAL = "通信に失敗しました。時間をおいて再度お試しください";
+	private static final String MESSAGE_IMAGE_SIZE = "画像は1枚5MBまでです";
 
 	private final AuthCookies authCookies;
 
@@ -121,6 +123,18 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		// 詳細はログにだけ出し、レスポンスには含めない（要件 N-31）
 		log.error("予期しないエラー", e);
 		return problem(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", MESSAGE_INTERNAL);
+	}
+
+	/**
+	 * 送られたファイルが、受け取れる大きさ（application.yml の spring.servlet.multipart）を超えた。
+	 * Spring は 413 にするが、ほかの入力の誤りと同じ 400 の形にして、画面に「画像は1枚5MBまでです」を出す
+	 */
+	@Override
+	protected ResponseEntity<Object> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex,
+			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+		ProblemDetail body = problemDetail(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", MESSAGE_VALIDATION);
+		body.setProperty("errors", List.of(Map.of("field", "file", "message", MESSAGE_IMAGE_SIZE)));
+		return ResponseEntity.badRequest().body(body);
 	}
 
 	/**

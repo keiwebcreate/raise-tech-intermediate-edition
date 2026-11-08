@@ -1,4 +1,4 @@
-# 開発用の PostgreSQL 18
+# 開発用の PostgreSQL 18 と、S3 の代わり（S3Mock）
 # 起動：docker compose up -d ／ 停止：docker compose stop（Intermediate_edition で実行）
 name: raisetechtimeline
 
@@ -17,5 +17,24 @@ services:
       # データを Docker のボリュームに保存する（コンテナを作り直しても消えない）
       - db-data:/var/lib/postgresql
 
+  # 画像・動画の保存先。開発中は本物の S3 の代わりに Adobe S3Mock を使う（S3 と同じ API で話せる）
+  # 期限付き URL の署名や期限は確かめない作りなので、期限切れの扱いは AWS で確かめる
+  s3:
+    image: adobe/s3mock:5.2.3
+    environment:
+      # 起動したときにバケットを作る（バケット名は backend の application-dev.yml と同じ）
+      COM_ADOBE_TESTING_S3MOCK_STORE_INITIAL_BUCKETS: raisetechtimeline-dev
+      # 本番と同じシドニー（東京は使わない）
+      COM_ADOBE_TESTING_S3MOCK_STORE_REGION: ap-southeast-2
+      # ファイルを Docker のボリュームに残す（止めても消えない）。ボリュームのときは /s3mockroot にする決まり
+      COM_ADOBE_TESTING_S3MOCK_STORE_ROOT: /s3mockroot
+      COM_ADOBE_TESTING_S3MOCK_STORE_RETAIN_FILES_ON_EXIT: "true"
+    ports:
+      # 画面（ブラウザ）からも動画を直接送るので、パソコンの 9090 で受ける
+      - "9090:9090"
+    volumes:
+      - s3-data:/s3mockroot
+
 volumes:
   db-data:
+  s3-data:

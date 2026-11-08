@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.3 |
+| 版 | 0.4 |
 | 作成日 | 2026-11-08 |
 | 状態 | たたき台（ユーザーの確認待ち） |
 
@@ -44,7 +44,12 @@
 | **MyBatis**（mybatis-spring-boot-starter） | **4.1.0**（Spring Boot 4 対応） | DB の読み書き（ユーザーの判断。講義は jOOQ）。SQL は `src/main/resources/mapper/*.xml` に書く |
 | Flyway | Spring Boot が決める | テーブルの作成・変更（講義と同じ）。SQL は `src/main/resources/db/migration/` |
 | **jjwt** | **0.13.0** | JWT を作る・確かめる道具（講義と同じ。講義は 0.12 系） |
-| AWS SDK for Java | 2 系の最新 | S3 への画像の保存（投稿の機能を作るときに入れる） |
+| AWS SDK for Java | **2.57.11** | S3 への画像・動画の保存、期限付き URL |
+| Thumbnailator | **0.4.21** | 画像の縮小。写真の向き（Exif の Orientation）も直す |
+| TwelveMonkeys imageio-webp | **3.15.3** | Java で WebP を読めるようにする |
+| webp-imageio（`com.github.usefulness`） | **0.11.0** | Java で WebP を書けるようにする。中に C 言語の libwebp が入っている（Windows・Linux の x86_64／aarch64 用）。Java 25 では `--enable-native-access=ALL-UNNAMED` が必要（`build.gradle` で設定） |
+| metadata-extractor | **2.22.0** | MP4 の長さ・映像の形式（H.264）を読む |
+| Adobe S3Mock | **5.2.3** | 開発・テストで S3 の代わりに動かす（Docker。テストは Testcontainers のモジュール）。MinIO は公式の Docker イメージをやめ、LocalStack は起動にアカウントのトークンが要るので使わない |
 | JUnit・Testcontainers | Spring Boot が決める | サーバーのテスト（テスト用の PostgreSQL 18 を Docker で動かす） |
 | Checkstyle・SpotBugs | 14.4.0・4.10.5 | コードのチェック（トレロ風アプリと同じ設定。`.\gradlew.bat check` で走る） |
 
@@ -87,6 +92,7 @@
 | Material UI | `npm view @mui/material`（2026-11-08。9.5.0。React 19 に対応） |
 | Terraform | HashiCorp の更新確認 API（2026-11-08。1.17.1）、AWS プロバイダーは Terraform Registry（6.72.0） |
 | MyBatis・jjwt | Maven Central（2026-11-08。4.1.0・0.13.0）。MyBatis の Spring Boot 4 対応は公式サイトの対応表で確認 |
+| 画像・動画・S3 の道具 | Maven Central（2026-11-08。AWS SDK 2.57.11、Thumbnailator 0.4.21、TwelveMonkeys 3.15.3、webp-imageio 0.11.0、metadata-extractor 2.22.0、S3Mock 5.2.3） |
 | 画面のライブラリ | `npm view`（2026-11-08。環境構築のときに入れた版） |
 
 実際に使っている版の正は、`backend/build.gradle` と `frontend/package.json`・`package-lock.json`。この表は人が読むための一覧なので、版を上げたらここも直す。
@@ -98,3 +104,4 @@
 | 0.1 | 2026-11-08 | たたき台を作成 |
 | 0.2 | 2026-11-08 | 講義の README に合わせ、Material UI 9 と Terraform 1.17 を追加（ユーザーの判断）。HTTPS は CloudFront |
 | 0.3 | 2026-11-08 | 環境構築で実際に入れた版にした。DB の読み書きを Spring Data JPA から MyBatis に、JWT の道具に jjwt、通信に axios を追加。認証はアクセス＋リフレッシュトークン・Cookie・CSRF 有効（ユーザーの判断） |
+| 0.4 | 2026-11-08 | 画像・動画の投稿で、AWS SDK・Thumbnailator・TwelveMonkeys・webp-imageio・metadata-extractor・S3Mock を追加（版も確定） |

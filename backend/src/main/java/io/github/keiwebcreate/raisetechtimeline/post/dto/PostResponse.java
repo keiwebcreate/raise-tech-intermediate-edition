@@ -1,6 +1,7 @@
 package io.github.keiwebcreate.raisetechtimeline.post.dto;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import org.jspecify.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import io.github.keiwebcreate.raisetechtimeline.post.Post;
  *
  * @param editedAt 編集した日時。編集していなければ null（画面の「編集済み」）
  * @param mine 見ている人の投稿か（画面は自分の投稿にだけ「…」メニューを出す）
+ * @param media 画像・動画（並び順）。なければ空
  */
 public record PostResponse(
 		long id,
@@ -18,16 +20,27 @@ public record PostResponse(
 		OffsetDateTime createdAt,
 		@Nullable OffsetDateTime editedAt,
 		Author author,
-		boolean mine) {
+		boolean mine,
+		List<Media> media) {
 
 	/** 投稿した人。メールアドレスは他人に見せないので入れない */
 	public record Author(long id, String username, String displayName) {
 	}
 
-	public static PostResponse from(Post post, long viewerId) {
+	/**
+	 * 画像・動画1つ。
+	 *
+	 * @param type image か video
+	 * @param key S3 のキー（編集で残すときに、そのまま送り返す）
+	 * @param url 見るための期限付きの URL（期限は1時間）
+	 */
+	public record Media(String type, String key, String url) {
+	}
+
+	public static PostResponse from(Post post, long viewerId, List<Media> media) {
 		Author author = new Author(post.userId(), post.authorUsername(), post.authorDisplayName());
 		return new PostResponse(post.id(), post.content(), post.createdAt(), post.editedAt(), author,
-				post.userId() == viewerId);
+				post.userId() == viewerId, media);
 	}
 
 }

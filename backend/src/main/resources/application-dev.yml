@@ -3,3 +3,9 @@ logging:
   level:
     # MyBatis が実行した SQL をログに出す（開発のときだけ）
     io.github.keiwebcreate.raisetechtimeline: debug
+
+app:
+  storage:
+    # 開発中は Docker の S3Mock（compose.yaml の s3。バケットは起動時に作られる）
+    bucket: raisetechtimeline-dev
+    endpoint: http://localhost:9090

@@ -8,3 +8,6 @@ app:
   auth:
     # テスト専用の鍵（51バイトの文字列を Base64 にしたもの。32バイト以上必要）。本番・開発では環境変数 SNS_JWT_SECRET を使う
     jwt-secret: dGVzdC1vbmx5LWtleS1mb3ItcmFpc2V0ZWNodGltZWxpbmUtand0LWhtYWMtc2hhMjU2
+  # S3 はテストのたびに Testcontainers の S3Mock を動かす。接続先（endpoint）は TestcontainersConfiguration が入れる
+  storage:
+    bucket: raisetechtimeline-test

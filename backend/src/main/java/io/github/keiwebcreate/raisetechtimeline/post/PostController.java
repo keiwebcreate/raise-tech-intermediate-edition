@@ -28,10 +28,10 @@ import jakarta.validation.Valid;
  * |---|---|
  * | GET    /api/posts?tab=&before=&after= | タイムライン（20件ずつ） |
  * | GET    /api/posts/new-count?tab=&after= | 新しい投稿の数（画面が60秒ごとに呼ぶ） |
- * | POST   /api/posts                  | 投稿する |
+ * | POST   /api/posts                  | 投稿する（画像・動画は先に /api/media で送っておき、キーを付ける） |
  * | GET    /api/posts/{id}             | 投稿の詳細 |
- * | PUT    /api/posts/{id}             | 編集（本人だけ） |
- * | DELETE /api/posts/{id}             | 削除（本人だけ） |
+ * | PUT    /api/posts/{id}             | 編集（本人だけ。画像・動画を外す・足すこともできる） |
+ * | DELETE /api/posts/{id}             | 削除（本人だけ。画像・動画は S3 からも消す） |
  */
 @RestController
 @RequestMapping("/api/posts")
@@ -61,7 +61,8 @@ public class PostController {
 	@PostMapping
 	ResponseEntity<PostResponse> create(@AuthenticationPrincipal LoginUser loginUser,
 			@Valid @RequestBody PostRequest request) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(postService.create(loginUser.id(), request.content()));
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(postService.create(loginUser.id(), request.content(), request.media()));
 	}
 
 	// {id:\d+}：数字だけ。/new-count などの URL と取り違えないように
@@ -73,7 +74,7 @@ public class PostController {
 	@PutMapping("/{id:\\d+}")
 	PostResponse update(@AuthenticationPrincipal LoginUser loginUser, @PathVariable long id,
 			@Valid @RequestBody PostRequest request) {
-		return postService.update(loginUser.id(), id, request.content());
+		return postService.update(loginUser.id(), id, request.content(), request.media());
 	}
 
 	@DeleteMapping("/{id:\\d+}")
