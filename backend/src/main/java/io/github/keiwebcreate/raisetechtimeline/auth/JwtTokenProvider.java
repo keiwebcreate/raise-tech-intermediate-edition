@@ -21,6 +21,7 @@ import io.jsonwebtoken.security.Keys;
  * - 中身：subject＝ユーザー ID、発行日時、期限（15分）。メールアドレスなどの個人の情報は入れない
  *   （JWT の中身は署名されているだけで、暗号化はされていない。だれでも読める）
  * - 署名：HMAC-SHA256。鍵は環境変数 SNS_JWT_SECRET（Base64）
+ *   （方式は必ず指定する。指定しないと jjwt が鍵の長さで選び、48 バイト以上の鍵だと HS384 になってしまう）
  *
  * 鍵が短いとコンストラクタで止める（起動させない）ので、作りかけのオブジェクトを悪用されないよう final にする（SpotBugs の指摘）。
  */
@@ -56,7 +57,7 @@ public final class JwtTokenProvider {
 				.subject(String.valueOf(userId))
 				.issuedAt(Date.from(now))
 				.expiration(Date.from(now.plus(properties.accessTokenTtl())))
-				.signWith(key)
+				.signWith(key, Jwts.SIG.HS256)
 				.compact();
 	}
 
