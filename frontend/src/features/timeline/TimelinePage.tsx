@@ -213,8 +213,8 @@ export function TimelinePage() {
             inputId="timeline-composer"
             submitLabel="投稿する"
             clearOnSuccess
-            onSubmit={async (content) => {
-              emit({ type: 'created', post: await postApi.createPost(content) })
+            onSubmit={async (content, media) => {
+              emit({ type: 'created', post: await postApi.createPost(content, media) })
               notify(MESSAGES.posted)
             }}
           />

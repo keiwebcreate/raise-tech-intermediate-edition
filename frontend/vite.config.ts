@@ -6,14 +6,19 @@ import { defineConfig } from 'vitest/config'
 // 画面の CSP（読み込んでよいものの決まり）。トレロ風アプリと同じ考え方
 // - スクリプト・通信・画像などは、自分のサイト（'self'）のものだけ
 // - 見た目（style）だけは書き込みも許す（'unsafe-inline'）。Material UI（Emotion）が <style> を足すため
-// - 画像・動画は S3 の期限付き URL から読むので、投稿の機能を作るときに img-src・media-src に S3 を足す
+// - 画像・動画は S3 の期限付き URL から読み（img-src・media-src）、動画は S3 へ直接送る（connect-src）。
+//   バケットの住所はシドニー（ap-southeast-2）の S3。バケット名はまだ決めていないので、* で受ける
+// - 選んだ動画を投稿の前に表示するため、media-src に blob:（手元のファイルの URL）も許す
 // - frame-ancestors（ほかのサイトへの埋め込みの禁止）は <meta> では効かないので、AWS で配信する側のヘッダーで付ける
+const S3_ORIGIN = 'https://*.s3.ap-southeast-2.amazonaws.com'
+
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
   "script-src 'self'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob:",
-  "connect-src 'self'",
+  `img-src 'self' data: blob: ${S3_ORIGIN}`,
+  `media-src 'self' blob: ${S3_ORIGIN}`,
+  `connect-src 'self' ${S3_ORIGIN}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
