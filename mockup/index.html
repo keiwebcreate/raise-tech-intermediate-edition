@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RaiseTechtimeline モックアップ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">本文へ移動</a>
+  <div id="app"></div>
+
+  <!-- モーダル（M-01〜M-03）は <dialog> を1つずつ使い回す -->
+  <dialog id="modal" class="modal" aria-labelledby="modal-title"></dialog>
+  <dialog id="confirm" class="modal modal--small" aria-labelledby="confirm-title"></dialog>
+  <dialog id="lightbox" class="lightbox" aria-label="画像の拡大表示"></dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
