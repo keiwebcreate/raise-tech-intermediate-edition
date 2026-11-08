@@ -16,7 +16,7 @@
 | 方針 | 内容 |
 |---|---|
 | 入口は CloudFront だけ | 利用者が開くのは CloudFront の住所（`https://xxxx.cloudfront.net`）。CloudFront が HTTPS を受け、ALB へ渡す。ALB は CloudFront からの通信だけを受け付ける。EC2・RDS には直接届かない |
-| HTTPS | CloudFront に最初から付いている証明書（`*.cloudfront.net`）を使う。独自ドメインと ACM の証明書はいらない |
+| HTTPS | CloudFront に最初から付いている証明書（`*.cloudfront.net`）を使う。**独自ドメインは使わない**（ユーザーの決定）ので、ACM の証明書・Route 53 もいらない |
 | 画面と API は同じ EC2 | EC2 の中の Nginx が、画面のファイル（React をビルドしたもの）を配り、`/api` を Spring Boot へ転送する。画面と API が同じ住所になるので、CORS（別の住所からの通信の許可）の設定がいらない |
 | DB は RDS | PostgreSQL 18。インターネットには出さない |
 | 画像・動画は S3 | バケットは公開しない。画面には期限付きの URL を渡す。画像は EC2 を通して保存し、大きい動画はブラウザから S3 へ直接送る（EC2 が作った期限付きの送り先 URL を使う） |
@@ -156,7 +156,6 @@ flowchart LR
 | AWS の作り方 | 画面（マネジメントコンソール）で作るか、Terraform などのコードで作るか |
 | 画面のビルドの場所 | パソコン・GitHub Actions・EC2 |
 | 動画の配信 | 今は S3 の期限付き URL から直接。見る人が増えて費用や速さが気になったら、S3 も CloudFront から配る |
-| 独自ドメイン | 今は使わない。あとで取るなら、CloudFront にそのドメインと ACM の証明書を付ける |
 
 ## 9. 改訂履歴
 
@@ -164,4 +163,4 @@ flowchart LR
 |---|---|---|
 | 0.1 | 2026-11-08 | 講義の方針（ALB・EC2・RDS・S3）をもとに、現時点の案を作成 |
 | 0.2 | 2026-11-08 | 動画の追加に合わせ、動画はブラウザから S3 へ直接送る形にした。S3 のライフサイクル・CORS、Nginx の上限を変更 |
-| 0.3 | 2026-11-08 | HTTPS は ALB の前に置いた CloudFront で付けることにした（ユーザーの決定）。ALB は CloudFront からだけ受け付ける。ACM・独自ドメインは使わない |
+| 0.3 | 2026-11-08 | HTTPS は ALB の前に置いた CloudFront で付けることにした（ユーザーの決定）。ALB は CloudFront からだけ受け付ける。独自ドメインは使わない（ユーザーの決定。ACM・Route 53 も使わない） |
