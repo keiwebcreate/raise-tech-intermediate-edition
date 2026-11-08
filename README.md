@@ -23,8 +23,8 @@ RaiseTech 中級編の課題（学習目的）として、フロントエンド�
 
 | レイヤー | 主要技術 |
 |---|---|
-| フロントエンド | React 19 + TypeScript 7.0 + Vite 8 + Material UI 9（Node.js 24） |
-| バックエンド | Java 25 + Spring Boot 4.1 + Gradle |
+| フロントエンド | React 19 + TypeScript 7.0 + Vite 8 + Material UI 9 + axios（Node.js 24） |
+| バックエンド | Java 25 + Spring Boot 4.1 + Gradle + MyBatis + Flyway（認証は JWT・jjwt） |
 | データベース | PostgreSQL 18 |
 | インフラ | AWS（CloudFront + ALB + EC2 + RDS + S3）+ Terraform。シドニーリージョン |
 
@@ -34,8 +34,9 @@ RaiseTech 中級編の課題（学習目的）として、フロントエンド�
 
 ```
 Intermediate_edition/
-├── frontend/          # フロントエンド（React + Vite）※これから作る
-├── backend/           # バックエンド（Spring Boot）※これから作る
+├── frontend/          # フロントエンド（React + Vite）
+├── backend/           # バックエンド（Spring Boot）
+├── compose.yaml       # 開発用の PostgreSQL 18（Docker）
 ├── terraform/         # インフラ構成（AWS / Terraform）※これから作る
 ├── mockup/            # 動くモックアップ（HTML・CSS・JavaScript）。index.html をブラウザで開く
 ├── docs/              # 設計ドキュメント
