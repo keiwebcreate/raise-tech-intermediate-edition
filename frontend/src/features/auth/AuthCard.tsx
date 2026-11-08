@@ -7,10 +7,11 @@ type Props = {
   children: ReactNode
 }
 
-// ログイン・新規登録の画面の枠（モックアップの .auth-card）。画面のまん中に白いカードを置く
+// ログイン・新規登録の画面の枠（モックアップの .auth-card）。画面のまん中に白いカードを置く。
+// 外側は <main>（画面の本文の印。画面を読み上げて使う人が、本文へすぐ飛べる）
 export function AuthCard({ onSubmit, children }: Props) {
   return (
-    <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', px: 2, py: 4 }}>
+    <Box component="main" sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', px: 2, py: 4 }}>
       <Paper
         component="form"
         onSubmit={onSubmit}
