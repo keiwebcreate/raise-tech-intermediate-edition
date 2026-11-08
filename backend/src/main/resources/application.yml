@@ -10,6 +10,12 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/sns_app}
     username: ${DB_USERNAME:sns_app_user}
     password: ${SNS_DB_PASSWORD}
+  # 画像のアップロード（POST /api/media/images）で受け取る大きさの上限。1枚5MB（docs/features/post.md 3章）
+  # 5MB を少し超えたものも「画像は1枚5MBまでです」と返せるように、受け取るのは 6MB までにし、5MB はコードで確かめる
+  servlet:
+    multipart:
+      max-file-size: 6MB
+      max-request-size: 7MB
 
 mybatis:
   # SQL を書いた XML の場所
@@ -32,3 +38,16 @@ app:
     # ログインの失敗は、同じ接続元から 15分に10回まで（要件 N-23）
     login-max-failures: 10
     login-failure-window: 15m
+
+  # 画像・動画の保存先（S3）。StorageProperties で読む
+  storage:
+    # バケット名。本番は環境変数（Parameter Store）から渡す
+    bucket: ${S3_BUCKET:}
+    # 本番と同じシドニー（東京は使わない）
+    region: ap-southeast-2
+    # 接続先。空なら本物の S3（本番。鍵は EC2 のロールから自動で読む）。開発・テストは S3Mock の住所を入れる
+    endpoint: ${S3_ENDPOINT:}
+    # 画面に渡す、画像・動画を見るための期限付き URL の期限
+    view-url-ttl: 1h
+    # 画面が動画を S3 へ直接送るための、期限付きの送り先 URL の期限
+    upload-url-ttl: 15m
