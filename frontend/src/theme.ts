@@ -2,6 +2,8 @@ import { createTheme } from '@mui/material/styles'
 
 // 色はモックアップ（mockup/style.css の :root）から移した。紺のインクと青白い紙
 export const theme = createTheme({
+  // 画面の幅の区切り（screen-design.md 3.1）：スマホ 〜767px ／ タブレット 768px〜 ／ パソコン 1024px〜
+  breakpoints: { values: { xs: 0, sm: 768, md: 1024, lg: 1200, xl: 1536 } },
   palette: {
     primary: { main: '#2f45d1', dark: '#2234a8' }, // ボタン・リンク
     error: { main: '#c8233a' },
