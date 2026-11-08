@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+	users テーブルの SQL（UserMapper.java）。
+	値は必ず #{} で渡す（DB に「値」として安全に渡る。${} は文字列をそのまま埋め込むので使わない）。
+	SELECT * は使わず、必要な列を書く（講義の方針）。
+-->
+<mapper namespace="io.github.keiwebcreate.raisetechtimeline.user.UserMapper">
+
+	<sql id="columns">
+		id, email, password_hash, username, display_name, bio, icon_image_key, created_at, updated_at
+	</sql>
+
+	<select id="findById" resultType="io.github.keiwebcreate.raisetechtimeline.user.User">
+		SELECT <include refid="columns"/>
+		FROM users
+		WHERE id = #{id}
+	</select>
+
+	<select id="findByEmail" resultType="io.github.keiwebcreate.raisetechtimeline.user.User">
+		SELECT <include refid="columns"/>
+		FROM users
+		WHERE email = #{email}
+	</select>
+
+	<select id="existsByEmail" resultType="boolean">
+		SELECT EXISTS (SELECT 1 FROM users WHERE email = #{email})
+	</select>
+
+	<select id="existsByUsername" resultType="boolean">
+		SELECT EXISTS (SELECT 1 FROM users WHERE username = #{username})
+	</select>
+
+	<!-- RETURNING id で、足した行の ID を受け取る。足す処理なので、MyBatis の読み込みの控え（キャッシュ）を使わない -->
+	<select id="insert" resultType="long" flushCache="true" useCache="false">
+		INSERT INTO users (email, password_hash, username, display_name)
+		VALUES (#{email}, #{passwordHash}, #{username}, #{displayName})
+		RETURNING id
+	</select>
+
+</mapper>

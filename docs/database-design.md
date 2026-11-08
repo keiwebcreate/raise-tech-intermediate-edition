@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.2 |
+| 版 | 0.3 |
 | 作成日 | 2026-11-08 |
 | 状態 | たたき台（ユーザーの確認待ち） |
 | データベース | PostgreSQL 18 |
@@ -37,6 +37,7 @@ erDiagram
   users ||--o{ comment_likes : "いいねする"
   users ||--o{ follows : "フォローする（follower）"
   users ||--o{ follows : "フォローされる（following）"
+  users ||--o{ refresh_tokens : "ログイン中の端末"
 
   users {
     bigint id PK
@@ -89,6 +90,14 @@ erDiagram
     bigint id PK
     bigint follower_id FK "フォローする人"
     bigint following_id FK "フォローされる人"
+    timestamptz created_at
+  }
+  refresh_tokens {
+    bigint id PK
+    bigint user_id FK
+    char token_hash UK "SHA-256のハッシュ"
+    timestamptz expires_at
+    timestamptz revoked_at "取り消した日時・NULL可"
     timestamptz created_at
   }
 ```
@@ -190,6 +199,23 @@ erDiagram
 - **`follower_id <> following_id`**（CHECK 制約）：自分自身はフォローできない
 - 例：太郎（id=1）が花子（id=2）をフォロー → `follower_id=1, following_id=2`。花子がフォローバック → `follower_id=2, following_id=1` の行が増える
 
+### 3.6 `refresh_tokens`（リフレッシュトークン）
+
+ログインを続けるための「引換券」（[authentication.md](features/authentication.md) 7章）。ログイン・更新のたびに1行増える。
+
+| 列 | 型 | NULL | 説明 |
+|---|---|---|---|
+| id | bigint | × | 主キー |
+| user_id | bigint | × | 持ち主（`users.id`）。ユーザーを消したら一緒に消える |
+| token_hash | char(64) | × | トークンの SHA-256 のハッシュ（16進数64文字）。**一意**。トークンそのものは保存しない（DB が漏れても使えない） |
+| expires_at | timestamptz | × | 期限（発行から7日） |
+| revoked_at | timestamptz | ○ | 使えなくした日時（取り替え・ログアウト・使い回しの検知）。NULL なら有効 |
+| created_at | timestamptz | × | 発行した日時 |
+
+- 有効なのは「`revoked_at` が NULL で、`expires_at` が今より後」の行だけ
+- `revoked_at` が入った行が使われたら、使い回し（盗まれた）とみなして、その人の行をすべて取り消す
+- 期限の切れた行は、1日1回まとめて消す。取り消した行も期限までは残す（使い回しを見つけるため）
+
 ---
 
 ## 4. 索引（さくいん。探すのを速くするための目次）
@@ -209,6 +235,9 @@ erDiagram
 | likes | `user_id` | ユーザーを消したとき |
 | follows | `(follower_id, following_id)`（一意） | フォロー中か・フォロー数・「フォロー中」タブ |
 | follows | `following_id` | フォロワー数・フォロワーの一覧 |
+| refresh_tokens | `token_hash`（一意） | 更新・ログアウトのときにトークンを探す |
+| refresh_tokens | `user_id` | 使い回しを見つけたとき、その人のトークンをまとめて取り消す |
+| refresh_tokens | `expires_at` | 期限切れをまとめて消す（1日1回） |
 
 - ユーザー検索の部分一致（`LIKE '%言葉%'`）は、ふつうの索引では速くならない。ユーザーが増えたら、PostgreSQL の `pg_trgm`（部分一致を速くする仕組み）を足す。今は使わない
 - コメント数・いいね数・フォロー数は、別の列に数を持たず、毎回数える（数がずれる心配がなく、作りが簡単。今の規模なら十分速い）
@@ -221,7 +250,7 @@ erDiagram
 |---|---|
 | 投稿 | その投稿の画像・動画の行（`post_media`）・コメント・返信・いいね・コメントへのいいね（`ON DELETE CASCADE`）。S3 のファイルはアプリが消す |
 | コメント | その下の返信（返信の返信も）と、それらへのいいね（`parent_comment_id` の `ON DELETE CASCADE`） |
-| ユーザー（退会。今回は作らない） | その人の投稿・コメント・いいね・フォロー（する・される両方） |
+| ユーザー（退会。今回は作らない） | その人の投稿・コメント・いいね・フォロー（する・される両方）・リフレッシュトークン |
 
 ---
 
@@ -248,6 +277,8 @@ erDiagram
 | 自分はフォローできない・2回フォローできない | `follows` の CHECK 制約・一意制約 |
 | フォローバックの判定 | `follows` で逆向きの行があるか |
 | 「フォロー中」タブ | `follows.follower_id = 自分` の `following_id` と自分の投稿 |
+| ログインを7日続ける・ログアウトで止める | `refresh_tokens`（ハッシュ・期限・取り消し） |
+| メールアドレス・ユーザー名は大文字・小文字を区別しない | `users` に小文字で保存（CHECK 制約）＋一意制約 |
 
 ---
 
@@ -259,6 +290,8 @@ erDiagram
 - 返信はコメントと同じテーブルに入れ、`parent_comment_id` で返信先を指す
 - コメントへのいいねは、投稿のいいねと別のテーブル（`comment_likes`）にする
 - 投稿の画像・動画は `post_media` テーブルに分ける（`posts.image_key` はなくした）
+- リフレッシュトークンの `refresh_tokens` テーブルを足す（ハッシュだけ保存）
+- テーブルは機能を作るときに Flyway で足していく。今あるのは `users`（V1）と `refresh_tokens`（V2）だけ
 
 ## 9. 改訂履歴
 
@@ -266,3 +299,4 @@ erDiagram
 |---|---|---|
 | 0.1 | 2026-11-08 | たたき台を作成 |
 | 0.2 | 2026-11-08 | コメントへの返信（`comments.parent_comment_id`）とコメントへのいいね（`comment_likes`）を追加。画像4枚・動画1本に合わせ、`posts.image_key` を `post_media` テーブルに置き換え |
+| 0.3 | 2026-11-08 | ログインの実装に合わせて `refresh_tokens` テーブル（3.6）を追加。`users` に小文字の CHECK 制約 |

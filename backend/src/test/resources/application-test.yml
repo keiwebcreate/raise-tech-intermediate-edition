@@ -1,0 +1,10 @@
+# テストのときだけ読み込む設定（build.gradle で test のプロファイルにしている）
+# DB は Testcontainers が用意するので、接続先は書かない
+spring:
+  datasource:
+    password: test-only
+
+app:
+  auth:
+    # テスト専用の鍵（51バイトの文字列を Base64 にしたもの。32バイト以上必要）。本番・開発では環境変数 SNS_JWT_SECRET を使う
+    jwt-secret: dGVzdC1vbmx5LWtleS1mb3ItcmFpc2V0ZWNodGltZWxpbmUtand0LWhtYWMtc2hhMjU2

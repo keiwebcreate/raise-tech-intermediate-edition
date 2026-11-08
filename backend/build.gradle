@@ -54,6 +54,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// テストのときは application-test.yml も読み込む（テスト専用の JWT の鍵など。環境変数がなくても動く）
+	systemProperty 'spring.profiles.active', 'test'
 }
 
 // 開発での起動（.\gradlew.bat bootRun）では、開発用の設定 application-dev.yml も読み込む

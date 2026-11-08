@@ -17,3 +17,18 @@ mybatis:
   configuration:
     # DB の user_id のような列を、Java の userId に自動で合わせる
     map-underscore-to-camel-case: true
+    # record（コンストラクタで値を受け取るクラス）に、列名と引数の名前で値を入れる
+    arg-name-based-constructor-auto-mapping: true
+
+app:
+  # ログインの決まり（docs/features/authentication.md）。AuthProperties で読む
+  auth:
+    # JWT に署名する鍵（Base64。32バイト以上）。環境変数から読み、コードや Git には書かない
+    jwt-secret: ${SNS_JWT_SECRET}
+    access-token-ttl: 15m
+    refresh-token-ttl: 7d
+    # Cookie に Secure（HTTPS のときだけ送る）を付ける。ブラウザは localhost を安全な場所として扱うので、開発中も true でよい
+    cookie-secure: true
+    # ログインの失敗は、同じ接続元から 15分に10回まで（要件 N-23）
+    login-max-failures: 10
+    login-failure-window: 15m
