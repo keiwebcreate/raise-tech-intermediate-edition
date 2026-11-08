@@ -8,13 +8,14 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 import { useState } from 'react'
 import { ConfirmDialog } from '../../shared/ConfirmDialog.tsx'
+import { mediaSignature } from './mediaRules.ts'
 import type { Post } from './postApi.ts'
 import { PostComposer } from './PostComposer.tsx'
 
 type Props = {
   // 編集する投稿。null なら新しく投稿する
   editing: Post | null
-  onSubmit: (content: string) => Promise<void>
+  onSubmit: (content: string, media: string[]) => Promise<void>
   onClose: () => void
 }
 
@@ -24,10 +25,13 @@ export function PostDialog({ editing, onSubmit, onClose }: Props) {
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'))
   const [content, setContent] = useState(editing?.content ?? '')
+  const initialSignature = mediaSignature(editing?.media.map((m) => m.key) ?? [])
+  const [media, setMedia] = useState(initialSignature)
   const [confirmingDiscard, setConfirmingDiscard] = useState(false)
 
   const isEdit = editing !== null
-  const dirty = isEdit && content !== editing.content
+  // 本文か画像・動画を変えていたら、閉じる前に確かめる
+  const dirty = isEdit && (content !== editing.content || media !== initialSignature)
 
   function requestClose() {
     if (dirty) setConfirmingDiscard(true)
@@ -58,9 +62,11 @@ export function PostDialog({ editing, onSubmit, onClose }: Props) {
           <PostComposer
             inputId="post-dialog-content"
             initialContent={editing?.content}
+            initialMedia={editing?.media}
             submitLabel={isEdit ? '保存する' : '投稿する'}
             onSubmit={onSubmit}
             onChange={setContent}
+            onMediaChange={setMedia}
             focusOnOpen
           />
         </DialogContent>

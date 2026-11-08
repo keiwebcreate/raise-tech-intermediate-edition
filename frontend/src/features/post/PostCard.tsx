@@ -11,6 +11,7 @@ import { formatFullTime, formatRelativeTime } from '../../shared/time.ts'
 import { UserAvatar } from '../../shared/UserAvatar.tsx'
 import { usePostActions } from './PostActionsContext.ts'
 import type { Post } from './postApi.ts'
+import { PostMediaGrid } from './PostMediaGrid.tsx'
 
 type Props = {
   post: Post
@@ -19,7 +20,7 @@ type Props = {
 }
 
 // 投稿1件（timeline.md 3.1・screen-design.md S-03・S-04）。
-// 画像・動画、コメント数・いいね数は、その機能を作るときに足す
+// コメント数・いいね数は、その機能を作るときに足す
 export function PostCard({ post, variant = 'list' }: Props) {
   const navigate = useNavigate()
   const { openEdit, requestDelete } = usePostActions()
@@ -29,7 +30,9 @@ export function PostCard({ post, variant = 'list' }: Props) {
   // 一覧では、リンク・ボタン以外のところを押すと詳細へ（文字を選んでいるときは移らない）
   function handleClick(event: MouseEvent<HTMLElement>) {
     if (variant !== 'list') return
-    if ((event.target as HTMLElement).closest('a, button, [role="menu"]')) return
+    // 画像を大きく表示したときなど、投稿の外（ポータル）に出した部品を押したときも、React では投稿まで届くので除く
+    if (!event.currentTarget.contains(event.target as Node)) return
+    if ((event.target as HTMLElement).closest('a, button, video, [role="menu"]')) return
     if (window.getSelection()?.toString()) return
     navigate(href)
   }
@@ -118,6 +121,7 @@ export function PostCard({ post, variant = 'list' }: Props) {
         >
           {post.content}
         </Typography>
+        <PostMediaGrid media={post.media} />
         {variant === 'detail' && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
             <time dateTime={post.createdAt}>{formatFullTime(post.createdAt)}</time>

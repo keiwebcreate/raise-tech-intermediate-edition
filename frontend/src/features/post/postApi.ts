@@ -1,6 +1,15 @@
 // 投稿とタイムラインの API（docs/features/post.md 8章・timeline.md 4.1）
 import { api } from '../../api/client.ts'
 
+// 投稿の画像・動画1つ
+export type PostMedia = {
+  type: 'image' | 'video'
+  // S3 のキー。編集で残すときは、この値をそのまま送り返す
+  key: string
+  // 見るための期限付きの URL（期限は1時間）
+  url: string
+}
+
 export type Post = {
   id: number
   content: string
@@ -10,6 +19,8 @@ export type Post = {
   author: { id: number; username: string; displayName: string }
   // 自分の投稿か（「…」メニューを出すか）
   mine: boolean
+  // 画像・動画（並び順）。なければ空
+  media: PostMedia[]
 }
 
 export type Tab = 'all' | 'following'
@@ -34,12 +45,14 @@ export async function getPost(id: number): Promise<Post> {
   return (await api.get<Post>(`/api/posts/${id}`)).data
 }
 
-export async function createPost(content: string): Promise<Post> {
-  return (await api.post<Post>('/api/posts', { content })).data
+// media：付ける画像・動画のキー（並べたい順）。新しく選んだものは一時置き場のキー、編集で残すものは今のキー
+export async function createPost(content: string, media: string[]): Promise<Post> {
+  return (await api.post<Post>('/api/posts', { content, media })).data
 }
 
-export async function updatePost(id: number, content: string): Promise<Post> {
-  return (await api.put<Post>(`/api/posts/${id}`, { content })).data
+// 編集。media は編集のあとの画像・動画（すべて外すなら空の配列）
+export async function updatePost(id: number, content: string, media: string[]): Promise<Post> {
+  return (await api.put<Post>(`/api/posts/${id}`, { content, media })).data
 }
 
 export async function deletePost(id: number): Promise<void> {

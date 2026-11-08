@@ -28,13 +28,13 @@ export function PostActionsProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  async function handleSubmit(content: string) {
+  async function handleSubmit(content: string, media: string[]) {
     if (dialog) {
-      const post = await postApi.updatePost(dialog.id, content)
+      const post = await postApi.updatePost(dialog.id, content, media)
       emit({ type: 'updated', post })
       notify(MESSAGES.postUpdated)
     } else {
-      const post = await postApi.createPost(content)
+      const post = await postApi.createPost(content, media)
       emit({ type: 'created', post })
       notify(MESSAGES.posted)
     }
