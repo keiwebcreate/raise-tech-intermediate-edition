@@ -135,13 +135,14 @@ public class PostService {
 	 * 4. post_media を並べ直す。外したもの・コピー元の一時ファイルは、コミットのあとに S3 から消す
 	 */
 	private void replaceMedia(long userId, long postId, List<String> requested, List<PostMedia> current) {
-		checkCombination(requested);
+		// 先にキーの形と持ち主を確かめる（でたらめなキーに、組み合わせの文言を返さないように）
 		Set<String> currentKeys = current.stream().map(PostMedia::s3Key).collect(Collectors.toSet());
 		for (String key : requested) {
-			if (!currentKeys.contains(key) && !mediaService.isOwnTmpKey(key, userId)) {
+			if (key == null || (!currentKeys.contains(key) && !mediaService.isOwnTmpKey(key, userId))) {
 				throw new FieldValidationException("media", MediaService.MESSAGE_NOT_FOUND);
 			}
 		}
+		checkCombination(requested);
 		if (requested.equals(current.stream().map(PostMedia::s3Key).toList())) {
 			// 変わっていない
 			return;
@@ -174,9 +175,6 @@ public class PostService {
 	}
 
 	private static void checkCombination(List<String> keys) {
-		if (keys.stream().anyMatch(key -> key == null)) {
-			throw new FieldValidationException("media", MediaService.MESSAGE_NOT_FOUND);
-		}
 		if (new HashSet<>(keys).size() != keys.size()) {
 			// 同じものを2回
 			throw new FieldValidationException("media", MediaService.MESSAGE_NOT_FOUND);

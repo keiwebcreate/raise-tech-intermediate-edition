@@ -27,7 +27,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -130,6 +133,45 @@ class PostMediaApiTest {
 	}
 
 	@Test
+	void 動くGIFは1枚目だけになる() throws Exception {
+		long me = newUser();
+		// 1枚目が赤、2枚目が緑の GIF
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		ImageWriter writer = ImageIO.getImageWritersByFormatName("gif").next();
+		try (ImageOutputStream ios = ImageIO.createImageOutputStream(out)) {
+			writer.setOutput(ios);
+			writer.prepareWriteSequence(null);
+			writer.writeToSequence(new IIOImage(filled(40, 30, Color.RED), null, null), null);
+			writer.writeToSequence(new IIOImage(filled(40, 30, Color.GREEN), null, null), null);
+			writer.endWriteSequence();
+		} finally {
+			writer.dispose();
+		}
+
+		// GIF は「色の表」を持つ形で読まれる。作り直すときに色が変わらない（赤が黒にならない）ことも確かめる
+		BufferedImage saved = webpImage(uploadedKey(me, out.toByteArray(), "anime.gif", "image/gif"));
+		Color center = new Color(saved.getRGB(20, 15));
+		assertThat(center.getRed()).isGreaterThan(200);
+		assertThat(center.getGreen()).isLessThan(60);
+	}
+
+	@Test
+	void 透明なPNGは透明さが残る() throws Exception {
+		long me = newUser();
+		// 左半分が透明、右半分が青
+		BufferedImage png = new BufferedImage(40, 20, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = png.createGraphics();
+		g.setColor(Color.BLUE);
+		g.fillRect(20, 0, 20, 20);
+		g.dispose();
+
+		BufferedImage saved = webpImage(uploadedKey(me, encode(png, "png"), "clear.png", "image/png"));
+		assertThat(saved.getColorModel().hasAlpha()).isTrue();
+		assertThat(saved.getRGB(5, 10) >>> 24).as("透明な部分").isLessThan(20);
+		assertThat(saved.getRGB(30, 10) >>> 24).as("青の部分").isGreaterThan(230);
+	}
+
+	@Test
 	void 画像でないファイルは_名前や種類を画像にしても断る() throws Exception {
 		long me = newUser();
 		expectFileError(uploadImage(me, "これは画像ではありません".getBytes(StandardCharsets.UTF_8), "fake.jpg",
@@ -224,6 +266,9 @@ class PostMediaApiTest {
 		expectMediaError(as(me, post("/api/posts"), json("ない", List.of(missing))),
 				"画像・動画が見つかりません。選び直してください");
 		expectMediaError(as(me, post("/api/posts"), json("でたらめ", List.of("../../etc/passwd"))),
+				"画像・動画が見つかりません。選び直してください");
+		// でたらめなキーは、組み合わせ（動画は1本まで）より先に断る
+		expectMediaError(as(me, post("/api/posts"), json("でたらめ2本", List.of("a.mp4", "b.mp4"))),
 				"画像・動画が見つかりません。選び直してください");
 		// 断られた投稿は保存されていない
 		assertThat(jdbcTemplate.queryForObject("SELECT count(*) FROM posts WHERE user_id = ?", Long.class, me))
@@ -368,7 +413,11 @@ class PostMediaApiTest {
 	}
 
 	private String uploadedKey(long userId, byte[] jpeg) throws Exception {
-		String body = uploadImage(userId, jpeg, "a.jpg", "image/jpeg")
+		return uploadedKey(userId, jpeg, "a.jpg", "image/jpeg");
+	}
+
+	private String uploadedKey(long userId, byte[] data, String filename, String contentType) throws Exception {
+		String body = uploadImage(userId, data, filename, contentType)
 				.andExpect(status().isCreated())
 				.andReturn().getResponse().getContentAsString();
 		return JsonPath.read(body, "$.key");
@@ -461,6 +510,15 @@ class PostMediaApiTest {
 		g.fillRect(0, 0, width, height);
 		g.setColor(Color.RED);
 		g.fillRect(0, 0, Math.max(1, width / 4), Math.max(1, height / 4));
+		g.dispose();
+		return image;
+	}
+
+	private static BufferedImage filled(int width, int height, Color color) {
+		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		Graphics2D g = image.createGraphics();
+		g.setColor(color);
+		g.fillRect(0, 0, width, height);
 		g.dispose();
 		return image;
 	}

@@ -98,11 +98,13 @@ public class ImageProcessor {
 		}
 	}
 
-	// 展開して、写真の向きを直す（Thumbnailator が Exif の Orientation を読んで回す）
+	// 展開して、写真の向きを直す（Thumbnailator が Exif の Orientation を読んで回す）。
+	// 作り直す絵は、いつも ARGB（色と透明さを全部持てる形）にする。GIF や色の少ない PNG は「色の表」を持つ形で読まれ、
+	// その形のまま作り直すと色の表が白黒になって、色が変わってしまうため
 	private static BufferedImage decode(byte[] data) {
 		try {
 			return Thumbnails.of(new ByteArrayInputStream(data)).scale(1.0).useExifOrientation(true)
-					.asBufferedImage();
+					.imageType(BufferedImage.TYPE_INT_ARGB).asBufferedImage();
 		} catch (IOException | RuntimeException e) {
 			throw invalid(MESSAGE_TYPE);
 		}
@@ -112,24 +114,35 @@ public class ImageProcessor {
 		BufferedImage resized = image;
 		if (image.getWidth() > MAX_WIDTH) {
 			try {
-				resized = Thumbnails.of(image).width(MAX_WIDTH).asBufferedImage();
+				resized = Thumbnails.of(image).width(MAX_WIDTH).imageType(BufferedImage.TYPE_INT_ARGB)
+						.asBufferedImage();
 			} catch (IOException e) {
 				throw new IllegalStateException("画像を縮小できませんでした", e);
 			}
 		}
-		// WebP に書く道具が扱える形（透明あり ARGB／なし RGB）にそろえる。GIF・白黒の画像などは別の形で読まれるため
-		int type = resized.getColorModel().hasAlpha() ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB;
-		if (resized.getType() == type) {
+		if (hasTransparency(resized)) {
 			return resized;
 		}
-		BufferedImage converted = new BufferedImage(resized.getWidth(), resized.getHeight(), type);
-		Graphics2D g = converted.createGraphics();
+		// 透明なところがなければ RGB にする（WebP に透明さの情報を入れずに済み、小さくなる）
+		BufferedImage rgb = new BufferedImage(resized.getWidth(), resized.getHeight(), BufferedImage.TYPE_INT_RGB);
+		Graphics2D g = rgb.createGraphics();
 		try {
 			g.drawImage(resized, 0, 0, null);
 		} finally {
 			g.dispose();
 		}
-		return converted;
+		return rgb;
+	}
+
+	private static boolean hasTransparency(BufferedImage argb) {
+		for (int y = 0; y < argb.getHeight(); y++) {
+			for (int x = 0; x < argb.getWidth(); x++) {
+				if (argb.getRGB(x, y) >>> 24 != 0xFF) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	private static byte[] encode(BufferedImage image) {
