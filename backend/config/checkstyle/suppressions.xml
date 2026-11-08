@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+		"-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+		"https://checkstyle.org/dtds/suppressions_1_2.dtd">
+<!-- Checkstyle の規則の例外（イシュー #27） -->
+<suppressions>
+	<!-- テストのメソッド名は、何を確かめるかを日本語で書く（例：登録済みのメールアドレスでは登録できない） -->
+	<suppress checks="MethodName" files="[\/]src[\/]test[\/]"/>
+	<!-- Spring Boot の起動クラスは、main を持つ public なクラスにするのが決まった形 -->
+	<suppress checks="HideUtilityClassConstructor" files="Application\.java$"/>
+</suppressions>

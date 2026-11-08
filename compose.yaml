@@ -1,0 +1,21 @@
+# 開発用の PostgreSQL 18
+# 起動：docker compose up -d ／ 停止：docker compose stop（Intermediate_edition で実行）
+name: raisetechtimeline
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: sns_app
+      POSTGRES_USER: sns_app_user
+      # パスワードはファイルに書かず、Windows の環境変数 SNS_DB_PASSWORD から読む。なければエラーで止める
+      POSTGRES_PASSWORD: ${SNS_DB_PASSWORD:?環境変数 SNS_DB_PASSWORD を設定してください}
+    ports:
+      # 前のアプリ（トレロ風 5432）とぶつからないように 5433 にする
+      - "5433:5432"
+    volumes:
+      # データを Docker のボリュームに保存する（コンテナを作り直しても消えない）
+      - db-data:/var/lib/postgresql
+
+volumes:
+  db-data:

@@ -1,0 +1,84 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '4.1.2'
+	id 'io.spring.dependency-management' version '1.1.7'
+	// コードのチェック。どちらも .\gradlew.bat check で走る（トレロ風アプリと同じ道具）
+	id 'checkstyle'
+	id 'com.github.spotbugs' version '6.5.13'
+}
+
+group = 'io.github.keiwebcreate'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+// Spring Boot が版を決めないものは、ここで版をそろえる
+ext {
+	mybatisStarterVersion = '4.1.0'  // Spring Boot 4 対応（2026-11-08 に最新を確認）
+	jjwtVersion = '0.13.0'           // JWT を作る・確かめる道具（講義と同じ jjwt。2026-11-08 に最新を確認）
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	// テーブルの作成・変更は Flyway（src/main/resources/db/migration）
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	// DB の読み書きは MyBatis（SQL は src/main/resources/mapper/*.xml）
+	implementation "org.mybatis.spring.boot:mybatis-spring-boot-starter:${mybatisStarterVersion}"
+	implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+	runtimeOnly "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+	runtimeOnly 'org.postgresql:postgresql'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation "org.mybatis.spring.boot:mybatis-spring-boot-starter-test:${mybatisStarterVersion}"
+	// テストでは Docker で本物の PostgreSQL 18 を動かす
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+// 開発での起動（.\gradlew.bat bootRun）では、開発用の設定 application-dev.yml も読み込む
+tasks.named('bootRun') {
+	systemProperty 'spring.profiles.active', 'dev'
+}
+
+// Checkstyle：書き方のチェック。規則は config/checkstyle/checkstyle.xml（トレロ風アプリからコピー）
+checkstyle {
+	toolVersion = '14.4.0'
+	// 警告（warning）は結果に出すだけで、失敗にはしない
+	maxWarnings = Integer.MAX_VALUE
+}
+
+// SpotBugs：不具合になりやすい書き方のチェック。結果は build/reports/spotbugs/ に HTML で出る
+spotbugs {
+	toolVersion = '4.10.5'
+	// 調べない指摘（Spring の標準の書き方に当てはまるもの）
+	excludeFilter = file('config/spotbugs/exclude.xml')
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask).configureEach {
+	reports {
+		html {
+			required = true
+		}
+	}
+}

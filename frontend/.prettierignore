@@ -1,0 +1,4 @@
+# Prettier で整えないもの（イシュー #27）
+dist
+node_modules
+package-lock.json
