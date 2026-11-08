@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+	posts テーブルの SQL（PostMapper.java）。
+	値は必ず #{} で渡す（${} は使わない）。SELECT * は使わず、必要な列を書く。
+	XML の中では「<」「>」をそのまま書けないので、&lt;（より小さい）・&gt;（より大きい）と書く。
+-->
+<mapper namespace="io.github.keiwebcreate.raisetechtimeline.post.PostMapper">
+
+	<!-- 投稿と、投稿した人の名前 -->
+	<sql id="columns">
+		p.id, p.user_id, p.content, p.edited_at, p.created_at,
+		u.username AS author_username, u.display_name AS author_display_name
+	</sql>
+
+	<!-- 「フォロー中」タブの絞り込み：自分の投稿と、自分がフォローしている人の投稿 -->
+	<sql id="followingOnly">
+		(p.user_id = #{viewerId}
+			OR p.user_id IN (SELECT f.following_id FROM follows f WHERE f.follower_id = #{viewerId}))
+	</sql>
+
+	<!--
+		並び順は (created_at, id) の新しい順。続きは「最後に読んだ投稿より古いもの」で探すので、
+		途中で新しい投稿が増えても、同じ投稿が2回出たり抜けたりしない（docs/features/timeline.md 4章）
+	-->
+	<select id="findTimeline" resultType="io.github.keiwebcreate.raisetechtimeline.post.Post">
+		SELECT <include refid="columns"/>
+		FROM posts p
+		JOIN users u ON u.id = p.user_id
+		<where>
+			<if test="following">
+				<include refid="followingOnly"/>
+			</if>
+			<if test="beforeId != null">
+				AND (p.created_at, p.id) &lt; (SELECT b.created_at, b.id FROM posts b WHERE b.id = #{beforeId})
+			</if>
+			<if test="afterId != null">
+				AND (p.created_at, p.id) &gt; (SELECT a.created_at, a.id FROM posts a WHERE a.id = #{afterId})
+			</if>
+		</where>
+		ORDER BY p.created_at DESC, p.id DESC
+		LIMIT #{limit}
+	</select>
+
+	<!-- 数えるのは max 件まで（何千件あっても、数える手間を増やさない） -->
+	<select id="countNewer" resultType="int">
+		SELECT count(*) FROM (
+			SELECT 1
+			FROM posts p
+			WHERE p.user_id &lt;&gt; #{viewerId}
+			<if test="following">
+				AND <include refid="followingOnly"/>
+			</if>
+			<if test="afterId != null">
+				AND (p.created_at, p.id) &gt; (SELECT a.created_at, a.id FROM posts a WHERE a.id = #{afterId})
+			</if>
+			LIMIT #{max}
+		) AS newer
+	</select>
+
+	<select id="findById" resultType="io.github.keiwebcreate.raisetechtimeline.post.Post">
+		SELECT <include refid="columns"/>
+		FROM posts p
+		JOIN users u ON u.id = p.user_id
+		WHERE p.id = #{id}
+	</select>
+
+	<!-- RETURNING id で、足した行の ID を受け取る。足す処理なので、MyBatis の読み込みの控え（キャッシュ）を使わない -->
+	<select id="insert" resultType="long" flushCache="true" useCache="false">
+		INSERT INTO posts (user_id, content)
+		VALUES (#{userId}, #{content})
+		RETURNING id
+	</select>
+
+	<!-- 本人の投稿かどうかを WHERE で確かめる（他人の投稿なら 0 行）。並び順に使う created_at は変えない -->
+	<update id="updateContent">
+		UPDATE posts
+		SET content = #{content}, edited_at = now(), updated_at = now()
+		WHERE id = #{id} AND user_id = #{userId}
+	</update>
+
+	<delete id="delete">
+		DELETE FROM posts
+		WHERE id = #{id} AND user_id = #{userId}
+	</delete>
+
+</mapper>
