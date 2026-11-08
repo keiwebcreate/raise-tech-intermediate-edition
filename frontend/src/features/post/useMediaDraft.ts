@@ -63,7 +63,7 @@ function messageOf(error: unknown, fallback: string): string {
 export function useMediaDraft(initial: PostMedia[] = []): MediaDraft {
   const [items, setItems] = useState<DraftItem[]>(() => fromPost(initial))
   const [error, setError] = useState<string | null>(null)
-  // 送信中の動画を途中でやめるための道具と、手元のファイルの URL（使い終わったら片付ける）
+  // 送信中の画像・動画を途中でやめるための道具と、手元のファイルの URL（使い終わったら片付ける）
   const aborts = useRef(new Map<string, AbortController>())
   const objectUrls = useRef(new Map<string, string>())
 
@@ -80,7 +80,7 @@ export function useMediaDraft(initial: PostMedia[] = []): MediaDraft {
     objectUrls.current.delete(id)
   }, [])
 
-  // 画面を閉じたら、送信中の動画をやめ、手元のファイルの URL を片付ける
+  // 画面を閉じたら、送信中の画像・動画をやめ、手元のファイルの URL を片付ける
   useEffect(() => {
     const abortMap = aborts.current
     const urlMap = objectUrls.current
@@ -106,14 +106,19 @@ export function useMediaDraft(initial: PostMedia[] = []): MediaDraft {
         ...added.map(({ id }): DraftItem => ({ id, kind: 'image', status: 'uploading', progress: 0 })),
       ])
       for (const { file, id } of added) {
+        // 外したとき・画面を閉じたときに、送信をやめられるようにする
+        const controller = new AbortController()
+        aborts.current.set(id, controller)
         mediaApi
-          .uploadImage(file)
+          .uploadImage(file, controller.signal)
           .then(({ key, url }) => update(id, { status: 'done', progress: 100, key, url }))
           .catch((e: unknown) => {
+            if (controller.signal.aborted) return
             // 画像は選び直してもらう（その1枚を外して文言を出す）
             setItems((current) => current.filter((item) => item.id !== id))
             setError(messageOf(e, MEDIA_MESSAGES.imageFailed))
           })
+          .finally(() => aborts.current.delete(id))
       }
     },
     [items.length, update],

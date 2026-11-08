@@ -3,11 +3,11 @@ import { create } from 'axios'
 import { api } from '../../api/client.ts'
 import { VIDEO_ACCEPT } from './mediaRules.ts'
 
-// 画像を1枚送る。サーバーが確かめて WebP にし、一時置き場に置く
-export async function uploadImage(file: File): Promise<{ key: string; url: string }> {
+// 画像を1枚送る。サーバーが確かめて WebP にし、一時置き場に置く。signal で途中でやめられる
+export async function uploadImage(file: File, signal: AbortSignal): Promise<{ key: string; url: string }> {
   const form = new FormData()
   form.append('file', file)
-  return (await api.post<{ key: string; url: string }>('/api/media/images', form)).data
+  return (await api.post<{ key: string; url: string }>('/api/media/images', form, { signal })).data
 }
 
 // 動画を S3 へ直接送るための、期限付きの送り先 URL をもらう

@@ -61,7 +61,7 @@ function ImageTile({ item, index, draft }: { item: DraftItem; index: number; dra
         <Box
           component="img"
           src={item.url}
-          alt={`選んだ画像 ${index + 1}`}
+          alt={`画像 ${index + 1}`}
           sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       ) : (
