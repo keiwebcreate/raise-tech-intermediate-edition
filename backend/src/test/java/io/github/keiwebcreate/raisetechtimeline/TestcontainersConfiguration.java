@@ -9,6 +9,8 @@ import org.testcontainers.utility.DockerImageName;
 
 import com.adobe.testing.s3mock.testcontainers.S3MockContainer;
 
+import io.github.keiwebcreate.raisetechtimeline.support.SqlCounter;
+
 // 機能ごとのパッケージ（auth など）のテストからも使うので public にする
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
@@ -33,6 +35,13 @@ public class TestcontainersConfiguration {
 	@Bean
 	DynamicPropertyRegistrar s3MockProperties(S3MockContainer s3Mock) {
 		return registry -> registry.add("app.storage.endpoint", s3Mock::getHttpEndpoint);
+	}
+
+	// MyBatis が送った SQL の数を数える道具（N+1 問題のテストで使う）。
+	// 別の設定に分けると、テストごとに Spring の準備と DB のコンテナが増えるので、ここに一緒に置く
+	@Bean
+	SqlCounter sqlCounter() {
+		return new SqlCounter();
 	}
 
 }

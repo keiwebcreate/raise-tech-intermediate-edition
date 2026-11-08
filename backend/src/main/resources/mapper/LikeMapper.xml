@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+	likes テーブルの SQL（LikeMapper.java）。
+	値は必ず #{} で渡す（${} は使わない）。SELECT * は使わず、必要な列を書く。
+-->
+<mapper namespace="io.github.keiwebcreate.raisetechtimeline.like.LikeMapper">
+
+	<select id="postExists" resultType="boolean">
+		SELECT EXISTS (SELECT 1 FROM posts WHERE id = #{postId})
+	</select>
+
+	<!--
+		ON CONFLICT DO NOTHING：同じ人・同じ投稿の行がもうあれば（一意制約にぶつかれば）、何もしない。
+		2回押した・同時に押したときに、エラー（500）にせず「いいね済み」のままにする（docs/features/like.md 4.1）
+	-->
+	<insert id="insert">
+		INSERT INTO likes (post_id, user_id)
+		VALUES (#{postId}, #{userId})
+		ON CONFLICT ON CONSTRAINT uq_likes DO NOTHING
+	</insert>
+
+	<delete id="delete">
+		DELETE FROM likes
+		WHERE post_id = #{postId} AND user_id = #{userId}
+	</delete>
+
+	<select id="count" resultType="long">
+		SELECT count(*) FROM likes WHERE post_id = #{postId}
+	</select>
+
+	<!-- 新しくいいねした順（ID の大きい順）。索引 ix_likes_post_id_id を使う -->
+	<select id="findLikers" resultType="io.github.keiwebcreate.raisetechtimeline.like.Liker">
+		SELECT l.id AS like_id, u.id AS user_id, u.username, u.display_name
+		FROM likes l
+		JOIN users u ON u.id = l.user_id
+		WHERE l.post_id = #{postId}
+		<if test="beforeId != null">
+			AND l.id &lt; #{beforeId}
+		</if>
+		ORDER BY l.id DESC
+		LIMIT #{limit}
+	</select>
+
+</mapper>

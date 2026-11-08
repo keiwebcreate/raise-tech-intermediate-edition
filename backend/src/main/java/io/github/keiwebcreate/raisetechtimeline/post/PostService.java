@@ -76,7 +76,7 @@ public class PostService {
 
 	@Transactional(readOnly = true)
 	public PostResponse get(long viewerId, long postId) {
-		Post post = postMapper.findById(postId).orElseThrow(PostNotFoundException::new);
+		Post post = postMapper.findById(postId, viewerId).orElseThrow(PostNotFoundException::new);
 		return toResponses(List.of(post), viewerId).getFirst();
 	}
 

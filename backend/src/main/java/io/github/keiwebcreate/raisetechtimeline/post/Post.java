@@ -9,6 +9,8 @@ import org.jspecify.annotations.Nullable;
  * MyBatis が SQL の結果をこの record に入れる。API の返事には PostResponse に詰め替える。
  *
  * @param editedAt 編集した日時。編集していなければ null
+ * @param likeCount いいね数（docs/features/like.md 4.2）
+ * @param liked 見ている人がいいねしているか
  */
 public record Post(
 		long id,
@@ -17,5 +19,7 @@ public record Post(
 		@Nullable OffsetDateTime editedAt,
 		OffsetDateTime createdAt,
 		String authorUsername,
-		String authorDisplayName) {
+		String authorDisplayName,
+		long likeCount,
+		boolean liked) {
 }
