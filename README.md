@@ -37,6 +37,7 @@ Intermediate_edition/
 ├── frontend/          # フロントエンド（React + Vite）※これから作る
 ├── backend/           # バックエンド（Spring Boot）※これから作る
 ├── terraform/         # インフラ構成（AWS / Terraform）※これから作る
+├── mockup/            # 動くモックアップ（HTML・CSS・JavaScript）。index.html をブラウザで開く
 ├── docs/              # 設計ドキュメント
 │   ├── requirements.md          # 要件定義書
 │   ├── features.md              # 機能一覧・ユースケース
