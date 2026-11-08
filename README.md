@@ -1,21 +1,59 @@
-# RaiseTechtimeline
+# RaiseTechtimeline - SNSアプリ
 
-X（旧 Twitter）のようなタイムライン形式の、テキスト中心の SNS アプリ。RaiseTech 中級編の課題として、学習目的で作る。
+X/Twitter 風のテキストベース SNS Web アプリケーション。
+RaiseTech 中級編の課題（学習目的）として、フロントエンド・バックエンド・データベースの3層構成で開発する。複数のユーザーが使う前提で設計する。
 
-- 複数のユーザーが使う前提で設計する（他の人の投稿にいいね・コメントしたり、フォローしたりできる）
-- 主な機能：新規登録・ログイン、プロフィール、フォロー、ユーザー検索、投稿（280文字・画像4枚まで、または動画1本）、タイムライン、コメント（返信も）、いいね（投稿・コメント）
+## 主な機能
+
+- ユーザー登録・ログイン（JWT 認証）
+- テキスト投稿（280文字制限）・画像4枚まで、または動画1本の添付（AWS S3）
+- 投稿の編集・削除
+- タイムライン表示（すべて / フォロー中のタブ切り替え）
+- いいね・コメント（数の表示つき）。コメントへの返信・コメントへのいいね
+- ユーザープロフィール（アイコン・自己紹介）
+- フォロー / フォロワー機能（フォローバック・フォロー数とフォロワー数）
+- ユーザー検索（検索画面のほか、コメント・いいねした人の一覧からもフォローできる）
+
+### X/Twitter との差別化
+
+- インプレッション数（表示回数）を表示しない
+- リツイート（リポスト）機能を用意しない
 
 ## 技術スタック
 
-| 区分 | 技術 |
+| レイヤー | 主要技術 |
 |---|---|
-| フロントエンド | React 19 ＋ TypeScript 7.0（Vite 8）。ビルドは Node.js 24 |
-| バックエンド | Java 25（LTS）＋ Spring Boot 4.1 |
+| フロントエンド | React 19 + TypeScript 7.0 + Vite 8 + Material UI 9（Node.js 24） |
+| バックエンド | Java 25 + Spring Boot 4.1 + Gradle |
 | データベース | PostgreSQL 18 |
-| インフラ | AWS（シドニーリージョン）。CloudFront（HTTPS）・ALB・EC2・RDS・S3（画像・動画） |
-| 開発ツール | Git・GitHub、Docker |
+| インフラ | AWS（CloudFront + ALB + EC2 + RDS + S3）+ Terraform。シドニーリージョン |
 
-詳しくは [docs/tech-stack.md](docs/tech-stack.md)。
+詳細は [技術スタック](docs/tech-stack.md) を参照。
+
+## プロジェクト構成
+
+```
+Intermediate_edition/
+├── frontend/          # フロントエンド（React + Vite）※これから作る
+├── backend/           # バックエンド（Spring Boot）※これから作る
+├── terraform/         # インフラ構成（AWS / Terraform）※これから作る
+├── docs/              # 設計ドキュメント
+│   ├── requirements.md          # 要件定義書
+│   ├── features.md              # 機能一覧・ユースケース
+│   ├── features/                # 機能定義書
+│   │   ├── authentication.md    # 認証機能
+│   │   ├── post.md              # 投稿機能
+│   │   ├── timeline.md          # タイムライン機能
+│   │   ├── comment.md           # コメント機能
+│   │   ├── like.md              # いいね機能
+│   │   ├── profile.md           # プロフィール・フォロー機能
+│   │   └── user-search.md       # ユーザー検索機能
+│   ├── screen-design.md         # 画面設計書
+│   ├── database-design.md       # データベース設計書
+│   ├── tech-stack.md            # 技術スタック
+│   └── infrastructure.md        # インフラ構成
+└── README.md
+```
 
 ## ドキュメント
 
@@ -26,8 +64,8 @@ X（旧 Twitter）のようなタイムライン形式の、テキスト中心�
 | 3 | [docs/features/authentication.md](docs/features/authentication.md) | 機能定義書：新規登録・ログイン・ログアウト |
 | 4 | [docs/features/timeline.md](docs/features/timeline.md) | 機能定義書：タイムライン（すべて・フォロー中） |
 | 5 | [docs/features/post.md](docs/features/post.md) | 機能定義書：投稿（作成・編集・削除・画像・動画） |
-| 6 | [docs/features/comment.md](docs/features/comment.md) | 機能定義書：コメント |
-| 7 | [docs/features/like.md](docs/features/like.md) | 機能定義書：いいね |
+| 6 | [docs/features/comment.md](docs/features/comment.md) | 機能定義書：コメント（返信を含む） |
+| 7 | [docs/features/like.md](docs/features/like.md) | 機能定義書：いいね（投稿・コメント） |
 | 8 | [docs/features/profile.md](docs/features/profile.md) | 機能定義書：プロフィール・フォロー |
 | 9 | [docs/features/user-search.md](docs/features/user-search.md) | 機能定義書：ユーザー検索 |
 | 10 | [docs/screen-design.md](docs/screen-design.md) | 画面設計書（画面一覧・ワイヤーフレーム・画面遷移図） |
