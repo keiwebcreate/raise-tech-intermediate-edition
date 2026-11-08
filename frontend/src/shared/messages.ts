@@ -10,4 +10,6 @@ export const MESSAGES = {
   postDeleted: '投稿を削除しました',
   postNotFound: 'この投稿は見つかりません',
   loadFailed: '読み込みに失敗しました',
+  // いいね（docs/features/like.md 5章）
+  likeFailed: 'いいねに失敗しました',
 } as const

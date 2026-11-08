@@ -57,6 +57,14 @@ export function PostDetailPage() {
       if (event.type === 'updated' && event.post.id === postId) {
         setLoaded({ key: requestKey, state: { status: 'ready', post: event.post } })
       }
+      if (event.type === 'liked' && event.id === postId) {
+        const { liked, likeCount } = event
+        setLoaded((prev) =>
+          prev && prev.state.status === 'ready'
+            ? { ...prev, state: { ...prev.state, post: { ...prev.state.post, liked, likeCount } } }
+            : prev,
+        )
+      }
       if (event.type === 'deleted' && event.id === postId) navigate('/', { replace: true })
     },
     [postId, requestKey, navigate],
