@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.3 |
+| 版 | 0.4 |
 | 作成日 | 2026-11-08 |
 | 状態 | たたき台（ユーザーの確認待ち） |
 | データベース | PostgreSQL 18 |
@@ -225,7 +225,7 @@ erDiagram
 | users | `email`（一意） | ログイン |
 | users | `username`（一意） | プロフィールの URL・検索 |
 | posts | `created_at DESC, id DESC` | 「すべて」タブ |
-| posts | `user_id, created_at DESC` | 「フォロー中」タブ・プロフィールの投稿 |
+| posts | `user_id, created_at DESC, id DESC` | 「フォロー中」タブ・プロフィールの投稿 |
 | post_media | `(post_id, position)`（一意） | 投稿の画像・動画を並び順で出す |
 | comments | `post_id, created_at` | 投稿のコメント一覧・コメント数 |
 | comments | `parent_comment_id` | 返信の一覧・返信数 |
@@ -291,7 +291,9 @@ erDiagram
 - コメントへのいいねは、投稿のいいねと別のテーブル（`comment_likes`）にする
 - 投稿の画像・動画は `post_media` テーブルに分ける（`posts.image_key` はなくした）
 - リフレッシュトークンの `refresh_tokens` テーブルを足す（ハッシュだけ保存）
-- テーブルは機能を作るときに Flyway で足していく。今あるのは `users`（V1）と `refresh_tokens`（V2）だけ
+- テーブルは機能を作るときに Flyway で足していく。今あるのは `users`（V1）・`refresh_tokens`（V2）・`posts`（V3）・`follows`（V4）。`post_media` は画像・動画の機能のときに足す
+- `follows` は、フォローの画面より先に、投稿と一緒に作った（「フォロー中」タブの SQL を最終の形にするため）
+- `posts` の索引には `id DESC` も入れた（同じ時刻の投稿を ID の大きい順に並べ、続きの読み込みで抜けも重なりも出さないため）
 
 ## 9. 改訂履歴
 
@@ -300,3 +302,4 @@ erDiagram
 | 0.1 | 2026-11-08 | たたき台を作成 |
 | 0.2 | 2026-11-08 | コメントへの返信（`comments.parent_comment_id`）とコメントへのいいね（`comment_likes`）を追加。画像4枚・動画1本に合わせ、`posts.image_key` を `post_media` テーブルに置き換え |
 | 0.3 | 2026-11-08 | ログインの実装に合わせて `refresh_tokens` テーブル（3.6）を追加。`users` に小文字の CHECK 制約 |
+| 0.4 | 2026-11-08 | 投稿の実装に合わせて `posts`（V3）・`follows`（V4）を作った（8章）。`post_media` は画像・動画の機能のとき |
