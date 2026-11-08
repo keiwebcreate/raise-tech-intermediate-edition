@@ -34,7 +34,12 @@ public interface PostMapper {
 	int countNewer(@Param("viewerId") long viewerId, @Param("following") boolean following,
 			@Param("afterId") @Nullable Long afterId, @Param("max") int max);
 
-	Optional<Post> findById(@Param("id") long id);
+	/**
+	 * 投稿1件。
+	 *
+	 * @param viewerId 見ている人（「自分がいいねしたか」に使う）
+	 */
+	Optional<Post> findById(@Param("id") long id, @Param("viewerId") long viewerId);
 
 	/** 1行足して、できた投稿の ID を返す */
 	long insert(@Param("userId") long userId, @Param("content") String content);

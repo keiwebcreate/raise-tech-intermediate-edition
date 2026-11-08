@@ -163,6 +163,8 @@
 | `author` | 投稿した人 `{ id, username, displayName }`（メールアドレスは入れない） |
 | `mine` | 見ている人の投稿か（画面は `true` のときだけ「…」メニューを出す） |
 | `media` | 画像・動画 `[{ type, key, url }]`（並び順）。`type` は `image` か `video`、`url` は見るための期限付き URL（期限1時間）。なければ `[]` |
+| `likeCount` | いいね数（[like.md](like.md)） |
+| `liked` | 見ている人がいいねしているか |
 
 - 他人の投稿・ない投稿の編集と削除は、どちらも 404 `POST_NOT_FOUND`（「この投稿は見つかりません」）。本人かどうかは SQL の条件（`WHERE id = ? AND user_id = ?`）で確かめる
 - 文字の数え方は、画面は `[...本文].length`、サーバーは Java の `codePointCount`、DB は `varchar(280)`。どれも「コードポイント」（ほとんどの絵文字も1文字）で数えるのでそろう。家族の絵文字のような、いくつかの文字を組み合わせた絵文字は2文字以上に数える
