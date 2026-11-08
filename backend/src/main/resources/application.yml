@@ -1,0 +1,19 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: raisetechtimeline
+  # DB の接続先。${環境変数名:初期値} の形で、環境変数がなければ「:」の後ろの値を使う
+  # パスワードだけは初期値を書かない（コードにも Git にも書かないため）
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/sns_app}
+    username: ${DB_USERNAME:sns_app_user}
+    password: ${SNS_DB_PASSWORD}
+
+mybatis:
+  # SQL を書いた XML の場所
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    # DB の user_id のような列を、Java の userId に自動で合わせる
+    map-underscore-to-camel-case: true

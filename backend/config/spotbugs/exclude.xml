@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SpotBugs で調べない指摘（イシュー #27） -->
+<FindBugsFilter
+		xmlns="https://github.com/spotbugs/filter/3.0.0"
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/spotbugs/4.10.5/spotbugs/etc/findbugsfilter.xsd">
+	<!--
+		EI_EXPOSE_REP・EI_EXPOSE_REP2：「受け取った・返したオブジェクトを、外から書き換えられるかもしれない」という指摘。
+		List を持つ record（DTO）や、コンストラクタで Service を受け取るクラス（DI）がすべて当てはまる。
+		どちらも Spring の標準の書き方で、List は toList() で作った書き換えられないものなので、調べない
+	-->
+	<Match>
+		<Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+	</Match>
+	<!--
+		VA_FORMAT_STRING_USES_NEWLINE：書式の文字列の \n を、OS ごとの改行 %n にせよという指摘。
+		テストで送る JSON の改行なので、\n のままでよい
+	-->
+	<Match>
+		<Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+	</Match>
+</FindBugsFilter>

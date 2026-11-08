@@ -1,0 +1,5 @@
+# 開発での起動（.\gradlew.bat bootRun）のときだけ読み込む設定
+logging:
+  level:
+    # MyBatis が実行した SQL をログに出す（開発のときだけ）
+    io.github.keiwebcreate.raisetechtimeline: debug

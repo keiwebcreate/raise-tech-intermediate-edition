@@ -1,2 +1,11 @@
 # Claude Code の設定・スキル（Git に入れない）
 .claude/
+
+# 秘密の情報（パスワード・鍵）を書いたファイル
+.env
+.env.*
+
+# セキュリティの検査結果（スキル claude-security）
+CLAUDE-SECURITY-*/
+
+# backend/・frontend/ の作ったファイル（build/・node_modules/・dist/）は、それぞれの .gitignore で除外している
