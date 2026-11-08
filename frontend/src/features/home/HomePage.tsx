@@ -17,7 +17,7 @@ export function HomePage() {
   }
 
   return (
-    <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', px: 2 }}>
+    <Box component="main" sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', px: 2 }}>
       <Paper variant="outlined" sx={{ width: '100%', maxWidth: 420, p: 4, textAlign: 'center' }}>
         <Typography component="h1" variant="h4" color="primary" sx={{ fontWeight: 700 }}>
           ログイン成功
