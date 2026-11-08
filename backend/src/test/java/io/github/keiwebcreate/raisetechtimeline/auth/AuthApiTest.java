@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
 import java.util.List;
@@ -77,6 +78,9 @@ class AuthApiTest {
 		assertThat(access.getSecure()).isTrue();
 		assertThat(access.getPath()).isEqualTo("/");
 		assertThat(access.getMaxAge()).isEqualTo(15 * 60);
+		// 署名の方式は HS256（テストの鍵は 51 バイトなので、指定し忘れると HS384 になる）
+		String header = access.getValue().substring(0, access.getValue().indexOf('.'));
+		assertThat(new String(Decoders.BASE64URL.decode(header), StandardCharsets.UTF_8)).contains("\"HS256\"");
 		Cookie refresh = cookie(result, AuthCookies.REFRESH_TOKEN);
 		assertThat(refresh.isHttpOnly()).isTrue();
 		assertThat(refresh.getPath()).isEqualTo("/api/auth");

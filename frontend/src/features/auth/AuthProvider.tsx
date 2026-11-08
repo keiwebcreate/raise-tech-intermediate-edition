@@ -29,6 +29,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .catch(() => setUser(null))
   }, [])
 
+  // 「戻る」「進む」で、ブラウザが凍らせておいたページ（バックフォワードキャッシュ）をそのまま出したときは、
+  // ログインしているかを確かめ直す。ログアウトした後に戻ると、前の人の名前などが見えてしまうため（イシュー #17）
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (!event.persisted) return // ふつうに読み込んだとき（上の確認で足りる）
+      setUser(undefined) // 確かめ終わるまで、前の画面を隠して「読み込み中」にする
+      authApi
+        .getMe()
+        .then(setUser)
+        .catch(() => setUser(null)) // ログインしていなければ、RequireAuth が /login へ移す
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => window.removeEventListener('pageshow', handlePageShow)
+  }, [])
+
   // 操作中にログインの延長もできなくなったら、お知らせを付けてログイン画面へ（authentication.md 4.4）
   useEffect(() => {
     setSessionExpiredHandler(() => {
