@@ -21,6 +21,9 @@ export type Post = {
   mine: boolean
   // 画像・動画（並び順）。なければ空
   media: PostMedia[]
+  // いいね数と、自分がいいねしているか
+  likeCount: number
+  liked: boolean
 }
 
 export type Tab = 'all' | 'following'

@@ -3,8 +3,12 @@ import { createContext, useContext, useEffect } from 'react'
 import type { Post } from './postApi.ts'
 
 // 投稿が変わったことの知らせ。タイムライン・投稿の詳細は、これを受けて一覧や表示を直す
+// liked：いいね・取り消しを送り終えた（いいね数だけ変わる。タイムラインと詳細の表示をそろえる）
 export type PostEvent =
-  { type: 'created'; post: Post } | { type: 'updated'; post: Post } | { type: 'deleted'; id: number }
+  | { type: 'created'; post: Post }
+  | { type: 'updated'; post: Post }
+  | { type: 'deleted'; id: number }
+  | { type: 'liked'; id: number; liked: boolean; likeCount: number }
 
 type PostActionsValue = {
   // 投稿のモーダル（M-01）を開く

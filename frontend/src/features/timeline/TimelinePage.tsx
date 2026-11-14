@@ -155,6 +155,10 @@ export function TimelinePage() {
         if (event.type === 'updated') {
           return { posts: prev.posts.map((p) => (p.id === event.post.id ? event.post : p)) }
         }
+        if (event.type === 'liked') {
+          const { liked, likeCount } = event
+          return { posts: prev.posts.map((p) => (p.id === event.id ? { ...p, liked, likeCount } : p)) }
+        }
         return { posts: prev.posts.filter((p) => p.id !== event.id) }
       })
     },

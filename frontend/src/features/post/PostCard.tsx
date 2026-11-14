@@ -5,10 +5,13 @@ import Link from '@mui/material/Link'
 import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import Typography from '@mui/material/Typography'
-import { useState, type MouseEvent } from 'react'
+import { useCallback, useState, type MouseEvent } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router'
 import { formatFullTime, formatRelativeTime } from '../../shared/time.ts'
 import { UserAvatar } from '../../shared/UserAvatar.tsx'
+import { getPostLikers, setPostLike } from '../like/likeApi.ts'
+import { LikeButton } from '../like/LikeButton.tsx'
+import { LikersDialog } from '../like/LikersDialog.tsx'
 import { usePostActions } from './PostActionsContext.ts'
 import type { Post } from './postApi.ts'
 import { PostMediaGrid } from './PostMediaGrid.tsx'
@@ -20,11 +23,15 @@ type Props = {
 }
 
 // 投稿1件（timeline.md 3.1・screen-design.md S-03・S-04）。
-// コメント数・いいね数は、その機能を作るときに足す
+// コメント数は、コメントの機能を作るときに足す
 export function PostCard({ post, variant = 'list' }: Props) {
   const navigate = useNavigate()
-  const { openEdit, requestDelete } = usePostActions()
+  const { openEdit, requestDelete, emit } = usePostActions()
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null)
+  const [likersOpen, setLikersOpen] = useState(false)
+  const postId = post.id
+  const sendLike = useCallback((liked: boolean) => setPostLike(postId, liked), [postId])
+  const loadLikers = useCallback((before?: number) => getPostLikers(postId, before), [postId])
   const href = `/posts/${post.id}`
 
   // 一覧では、リンク・ボタン以外のところを押すと詳細へ（文字を選んでいるときは移らない）
@@ -122,6 +129,17 @@ export function PostCard({ post, variant = 'list' }: Props) {
           {post.content}
         </Typography>
         <PostMediaGrid media={post.media} />
+        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, ml: -1 }}>
+          <LikeButton
+            key={postId}
+            liked={post.liked}
+            likeCount={post.likeCount}
+            send={sendLike}
+            onSettled={({ liked, likeCount }) => emit({ type: 'liked', id: postId, liked, likeCount })}
+            onCountClick={() => setLikersOpen(true)}
+          />
+        </Box>
+        {likersOpen && <LikersDialog load={loadLikers} onClose={() => setLikersOpen(false)} />}
         {variant === 'detail' && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
             <time dateTime={post.createdAt}>{formatFullTime(post.createdAt)}</time>
