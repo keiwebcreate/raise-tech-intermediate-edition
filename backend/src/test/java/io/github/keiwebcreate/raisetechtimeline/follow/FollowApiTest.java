@@ -109,12 +109,15 @@ class FollowApiTest {
 	}
 
 	@Test
-	void 自分自身はフォローできない() throws Exception {
+	void 自分自身はフォローも解除もできない() throws Exception {
 		long me = newUser();
 		as(me, put(followUrl(me)))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.code").value("CANNOT_FOLLOW_SELF"))
 				.andExpect(jsonPath("$.detail").value("自分自身はフォローできません"));
+		as(me, delete(followUrl(me)))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.code").value("CANNOT_FOLLOW_SELF"));
 		assertThat(isFollowing(me, me)).isFalse();
 	}
 

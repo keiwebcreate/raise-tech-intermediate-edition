@@ -57,10 +57,14 @@ public class FollowService {
 	 * フォローを解除する。フォローしていなくても、エラーにしない。
 	 *
 	 * @throws UserNotFoundException 相手がいない
+	 * @throws CannotFollowSelfException 自分自身（フォローと同じく断る）
 	 */
 	@Transactional
 	public FollowResponse unfollow(long userId, String username) {
 		long targetId = findUserId(username);
+		if (targetId == userId) {
+			throw new CannotFollowSelfException();
+		}
 		followMapper.delete(userId, targetId);
 		return new FollowResponse(false, followMapper.countFollowers(targetId));
 	}

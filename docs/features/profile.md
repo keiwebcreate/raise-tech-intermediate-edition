@@ -121,7 +121,7 @@ URL は `/users/{ユーザー名}`。
   - 編集を保存したら、左のメニューの名前・アイコンもすぐにそろえる。すでに出ている投稿の名前・アイコンは、読み直したときに変わる
 - フォローの API（2026-11-15、フォローのサーバーのとき）
   - 相手は URL のユーザー名で指す（ユーザーの決定。プロフィールの API・画面の URL と同じ）。大文字・小文字は区別しない
-  - 自分自身をフォローしようとしたら 400 `CANNOT_FOLLOW_SELF`「自分自身はフォローできません」（画面は自分にボタンを出さないので、ふつうは起きない）
+  - 自分自身をフォロー・解除しようとしたら 400 `CANNOT_FOLLOW_SELF`「自分自身はフォローできません」（画面は自分にボタンを出さないので、ふつうは起きない。解除も断るのは品質チェックでの決定）
   - フォロー・解除の返事に、相手の今のフォロワー数を入れる（プロフィールの数をそろえるため）
   - 一覧の続きの目印（`nextBefore`）は、フォローの行の ID（いいねした人の一覧と同じ作り）
 
@@ -136,7 +136,7 @@ URL は `/users/{ユーザー名}`。
 | POST `/api/media/icons` | multipart の `file`（JPEG・PNG・WebP、5MB まで） | 201 `{ key, url }`（正方形の 400×400 の WebP にして一時置き場に置く）／400 `VALIDATION_ERROR`（`errors[].field` は `file`。「JPEG・PNG・WebP の画像を選んでください」「画像は5MBまでです」） |
 | PUT `/api/users/me` | `{ displayName, bio?, iconKey? }` | 200 Profile／400 `VALIDATION_ERROR`（`errors[].field` は `displayName`・`bio`・`iconKey`） |
 | PUT `/api/users/{ユーザー名}/follow` | なし | 200 `{ following: true, followerCount }`（`followerCount` は相手の今のフォロワー数）。もうフォローしていても同じ返事（2回押し・同時に押しても 500 にしない）／400 `CANNOT_FOLLOW_SELF`（「自分自身はフォローできません」）／404 `USER_NOT_FOUND` |
-| DELETE `/api/users/{ユーザー名}/follow` | なし | 200 `{ following: false, followerCount }`。フォローしていなくても同じ返事／404 `USER_NOT_FOUND` |
+| DELETE `/api/users/{ユーザー名}/follow` | なし | 200 `{ following: false, followerCount }`。フォローしていなくても同じ返事／400 `CANNOT_FOLLOW_SELF`（自分自身）／404 `USER_NOT_FOUND` |
 | GET `/api/users/{ユーザー名}/following?before=` | なし | 200 `{ users: [FollowUser], nextBefore }`。その人がフォローしている人を、新しくフォローした順に20件。続きは `before` に `nextBefore` を入れて読む（なければ `null`）／404 `USER_NOT_FOUND` |
 | GET `/api/users/{ユーザー名}/followers?before=` | なし | 200 `{ users: [FollowUser], nextBefore }`。その人のフォロワーを、新しくフォローされた順に20件／404 `USER_NOT_FOUND` |
 
