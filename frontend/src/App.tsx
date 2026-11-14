@@ -6,6 +6,8 @@ import { AuthProvider } from './features/auth/AuthProvider.tsx'
 import { LoginPage } from './features/auth/LoginPage.tsx'
 import { GuestOnly, RequireAuth } from './features/auth/RouteGuards.tsx'
 import { SignupPage } from './features/auth/SignupPage.tsx'
+import { FollowListPage } from './features/follow/FollowListPage.tsx'
+import { FollowProvider } from './features/follow/FollowProvider.tsx'
 import { PostActionsProvider } from './features/post/PostActionsProvider.tsx'
 import { PostDetailPage } from './features/post/PostDetailPage.tsx'
 import { ProfileEditPage } from './features/profile/ProfileEditPage.tsx'
@@ -20,7 +22,9 @@ function Member({ children }: { children: ReactNode }) {
   return (
     <RequireAuth>
       <PostActionsProvider>
-        <AppLayout>{children}</AppLayout>
+        <FollowProvider>
+          <AppLayout>{children}</AppLayout>
+        </FollowProvider>
       </PostActionsProvider>
     </RequireAuth>
   )
@@ -71,6 +75,24 @@ function AppRoutes() {
           element={
             <Member>
               <ProfilePage />
+            </Member>
+          }
+        />
+        {/* S-07 フォロー中の一覧 */}
+        <Route
+          path="/users/:username/following"
+          element={
+            <Member>
+              <FollowListPage kind="following" />
+            </Member>
+          }
+        />
+        {/* S-07 フォロワーの一覧 */}
+        <Route
+          path="/users/:username/followers"
+          element={
+            <Member>
+              <FollowListPage kind="followers" />
             </Member>
           }
         />

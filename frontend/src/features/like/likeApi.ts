@@ -1,10 +1,10 @@
 // 投稿へのいいねの API（docs/features/like.md 8章）
 import { api } from '../../api/client.ts'
-import type { UserSummary } from '../../api/types.ts'
+import type { ListedUser } from '../follow/followApi.ts'
 import type { LikeState } from './likeToggler.ts'
 
-// いいねした人（自己紹介・フォローの状態は、その機能のときに足す）
-export type Liker = UserSummary
+// いいねした人（自己紹介・フォローの状態つき）
+export type Liker = ListedUser
 
 export type LikersPage = {
   users: Liker[]

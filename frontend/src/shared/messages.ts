@@ -18,4 +18,6 @@ export const MESSAGES = {
   // プロフィール（docs/features/profile.md 5章・screen-design.md 3.4）
   userNotFound: 'このアカウントは存在しません',
   profileUpdated: 'プロフィールを更新しました',
+  // フォロー（docs/features/profile.md 5章）
+  followFailed: 'フォローに失敗しました',
 } as const

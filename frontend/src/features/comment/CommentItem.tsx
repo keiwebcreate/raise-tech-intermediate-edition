@@ -4,6 +4,7 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import { useCallback, useState, type ReactNode } from 'react'
 import { formatFullTime, formatRelativeTime } from '../../shared/time.ts'
+import { FollowButton } from '../follow/FollowButton.tsx'
 import { LikeButton } from '../like/LikeButton.tsx'
 import { LikersDialog } from '../like/LikersDialog.tsx'
 import type { LikeState } from '../like/likeToggler.ts'
@@ -22,7 +23,7 @@ type Props = {
 }
 
 // コメント・返信1件（comment.md 4.2・screen-design.md S-04）。
-// フォローボタンは、フォローの機能のときに足す
+// 右上に、自分のものなら「削除」、他の人のものならフォローボタン（profile.md 4.3）
 export function CommentItem({ comment, onReply, onDelete, onLikeSettled, children }: Props) {
   const [likersOpen, setLikersOpen] = useState(false)
   const id = comment.id
@@ -41,6 +42,16 @@ export function CommentItem({ comment, onReply, onDelete, onLikeSettled, childre
           <Typography component="span" color="text.secondary" title={formatFullTime(comment.createdAt)}>
             <time dateTime={comment.createdAt}>{formatRelativeTime(comment.createdAt)}</time>
           </Typography>
+          {!comment.mine && (
+            <Box sx={{ ml: 'auto' }}>
+              <FollowButton
+                user={comment.author}
+                following={comment.author.following}
+                followedBy={comment.author.followedBy}
+                size="small"
+              />
+            </Box>
+          )}
           {comment.mine && (
             <Button
               size="small"

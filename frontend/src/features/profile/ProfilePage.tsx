@@ -2,6 +2,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
+import Link from '@mui/material/Link'
 import CircularProgress from '@mui/material/CircularProgress'
 import IconButton from '@mui/material/IconButton'
 import Skeleton from '@mui/material/Skeleton'
@@ -12,6 +13,10 @@ import { ApiError } from '../../api/client.ts'
 import { MESSAGES } from '../../shared/messages.ts'
 import { formatJoinedMonth } from '../../shared/time.ts'
 import { UserAvatar } from '../../shared/UserAvatar.tsx'
+import { FollowButton } from '../follow/FollowButton.tsx'
+import { useFollowEvents } from '../follow/FollowContext.ts'
+import { applyFollowEvent, type FollowEvent } from '../follow/followState.ts'
+import { FollowedByBadge } from '../follow/UserListItem.tsx'
 import { usePostEvents, type PostEvent } from '../post/PostActionsContext.ts'
 import type { Post } from '../post/postApi.ts'
 import { PostCard } from '../post/PostCard.tsx'
@@ -26,7 +31,7 @@ type ProfileState =
   | { status: 'error' }
 
 // S-05 プロフィール（/users/:username。profile.md 3.1）。
-// フォローボタン・「フォローされています」・フォロー数から一覧（S-07）へのリンクは、フォローの機能のときに足す
+// フォローボタン・「フォローされています」・フォロー数とフォロワー数（押すと S-07）
 export function ProfilePage() {
   const { username = '' } = useParams()
   const navigate = useNavigate()
@@ -54,6 +59,16 @@ export function ProfilePage() {
       ignore = true
     }
   }, [username, requestKey])
+
+  // フォロー・解除したら、フォロー数・フォロワー数とボタンをそろえる（この画面のどこで押しても）
+  const handleFollow = useCallback((event: FollowEvent) => {
+    setLoaded((prev) =>
+      prev && prev.state.status === 'ready'
+        ? { ...prev, state: { status: 'ready', profile: applyFollowEvent(prev.state.profile, event) } }
+        : prev,
+    )
+  }, [])
+  useFollowEvents(handleFollow)
 
   // アプリの中から来たなら前の画面へ、URL を直接開いたならタイムラインへ（投稿の詳細と同じ）
   function goBack() {
@@ -124,6 +139,7 @@ function ProfileHeader({ profile }: { profile: profileApi.Profile }) {
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 1 }}>
         <UserAvatar displayName={profile.displayName} iconUrl={profile.iconUrl} size={88} />
+        {!profile.mine && <FollowButton user={profile} following={profile.following} followedBy={profile.followedBy} />}
         {profile.mine && (
           <Button
             component={RouterLink}
@@ -140,9 +156,12 @@ function ProfileHeader({ profile }: { profile: profileApi.Profile }) {
       <Typography component="p" variant="h6" sx={{ fontWeight: 700, mt: 1.5, overflowWrap: 'anywhere' }}>
         {profile.displayName}
       </Typography>
-      <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
-        @{profile.username}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', columnGap: 1 }}>
+        <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere', minWidth: 0 }}>
+          @{profile.username}
+        </Typography>
+        {profile.followedBy && <FollowedByBadge />}
+      </Box>
       {profile.bio && (
         // 改行はそのまま出す。文字は React が自動でエスケープする（要件 N-26）
         <Typography sx={{ mt: 1.5, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{profile.bio}</Typography>
@@ -150,22 +169,28 @@ function ProfileHeader({ profile }: { profile: profileApi.Profile }) {
       <Typography variant="body2" color="text.secondary" sx={{ mt: 1.5 }}>
         {formatJoinedMonth(profile.createdAt)}
       </Typography>
-      {/* 数だけ先に出す。押して一覧（S-07）へ移るのは、フォローの機能のとき */}
+      {/* 押すとフォロー中・フォロワーの一覧（S-07）へ */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', columnGap: 2.5, mt: 1 }}>
-        <Typography variant="body2" color="text.secondary">
-          <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
-            {profile.followingCount}
-          </Box>{' '}
+        <CountLink to={`${profileApi.profilePath(profile.username)}/following`} count={profile.followingCount}>
           フォロー
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
-            {profile.followerCount}
-          </Box>{' '}
+        </CountLink>
+        <CountLink to={`${profileApi.profilePath(profile.username)}/followers`} count={profile.followerCount}>
           フォロワー
-        </Typography>
+        </CountLink>
       </Box>
     </Box>
+  )
+}
+
+// 「12 フォロー」「34 フォロワー」。読み上げの名前は見えている文字そのまま（数と言葉の間は空白で区切る）
+function CountLink({ to, count, children }: { to: string; count: number; children: string }) {
+  return (
+    <Link component={RouterLink} to={to} variant="body2" color="text.secondary" underline="hover">
+      <Box component="span" sx={{ color: 'text.primary', fontWeight: 700 }}>
+        {count}
+      </Box>{' '}
+      {children}
+    </Link>
   )
 }
 
