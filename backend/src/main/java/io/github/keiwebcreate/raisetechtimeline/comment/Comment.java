@@ -16,6 +16,8 @@ import org.jspecify.annotations.Nullable;
  * @param liked 見ている人がいいねしているか
  * @param replyCount 直接付いた返信の数（「↩ 返信 N」。comment.md 4.3）
  * @param threadReplyCount 一番上のコメントの下に並ぶ返信すべての数（「返信を表示（N件）」）。返信なら 0
+ * @param authorFollowing 見ている人が、書いた人をフォローしているか（コメントの行のフォローボタン）
+ * @param authorFollowedBy 書いた人が、見ている人をフォローしているか
  */
 public record Comment(
 		long id,
@@ -32,5 +34,7 @@ public record Comment(
 		long likeCount,
 		boolean liked,
 		long replyCount,
-		long threadReplyCount) {
+		long threadReplyCount,
+		boolean authorFollowing,
+		boolean authorFollowedBy) {
 }

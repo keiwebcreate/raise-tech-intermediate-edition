@@ -12,8 +12,15 @@ import org.jspecify.annotations.Nullable;
  */
 public record LikersResponse(List<User> users, @Nullable Long nextBefore) {
 
-	/** いいねした人。メールアドレスは他人に見せないので入れない。自己紹介・フォローの状態は、その機能のときに足す */
-	public record User(long id, String username, String displayName, @Nullable String iconUrl) {
+	/**
+	 * いいねした人。メールアドレスは他人に見せないので入れない。
+	 *
+	 * @param bio 自己紹介。なければ null（画面は1行まで出す）
+	 * @param following 見ている人が、この人をフォローしているか（フォローボタン）
+	 * @param followedBy この人が、見ている人をフォローしているか（「フォローバック」）
+	 */
+	public record User(long id, String username, String displayName, @Nullable String bio,
+			@Nullable String iconUrl, boolean following, boolean followedBy) {
 	}
 
 }

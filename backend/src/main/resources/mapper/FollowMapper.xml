@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+	follows テーブルの SQL（FollowMapper.java）。
+	値は必ず #{} で渡す（${} は使わない）。SELECT * は使わず、必要な列を書く。
+	XML の中では「<」をそのまま書けないので、&lt; と書く。
+-->
+<mapper namespace="io.github.keiwebcreate.raisetechtimeline.follow.FollowMapper">
+
+	<select id="findUserId" resultType="long">
+		SELECT id FROM users WHERE username = #{username}
+	</select>
+
+	<!--
+		ON CONFLICT DO NOTHING：同じ組み合わせの行がもうあれば（一意制約にぶつかれば）、何もしない。
+		2回押した・同時に押したときに、エラー（500）にせず「フォロー済み」のままにする（docs/features/profile.md 4.1）
+	-->
+	<insert id="insert">
+		INSERT INTO follows (follower_id, following_id)
+		VALUES (#{followerId}, #{followingId})
+		ON CONFLICT ON CONSTRAINT uq_follows DO NOTHING
+	</insert>
+
+	<delete id="delete">
+		DELETE FROM follows
+		WHERE follower_id = #{followerId} AND following_id = #{followingId}
+	</delete>
+
+	<!-- 索引 ix_follows_following_id_id で数える -->
+	<select id="countFollowers" resultType="long">
+		SELECT count(*) FROM follows WHERE following_id = #{userId}
+	</select>
+
+	<!--
+		一覧の1人と、見ている人（viewerId）から見たフォローの状態。
+		状態は、表示する行（20件）のぶんだけ、同じ SQL の中で確かめる（1人ごとに別の SQL を出さない＝N+1 問題を起こさない）。
+		どちらも一意制約 (follower_id, following_id) の索引で1行を探すだけ
+	-->
+	<sql id="userColumns">
+		f.id AS follow_id, u.id AS user_id, u.username, u.display_name, u.bio, u.icon_image_key,
+		EXISTS (SELECT 1 FROM follows v WHERE v.follower_id = #{viewerId} AND v.following_id = u.id) AS following,
+		EXISTS (SELECT 1 FROM follows v WHERE v.follower_id = u.id AND v.following_id = #{viewerId}) AS followed_by
+	</sql>
+
+	<!-- その人（follower_id）がフォローしている人（following_id 側の users）。索引 ix_follows_follower_id_id を使う -->
+	<select id="findFollowing" resultType="io.github.keiwebcreate.raisetechtimeline.follow.FollowUser">
+		SELECT <include refid="userColumns"/>
+		FROM follows f
+		JOIN users u ON u.id = f.following_id
+		WHERE f.follower_id = #{userId}
+		<if test="beforeId != null">
+			AND f.id &lt; #{beforeId}
+		</if>
+		ORDER BY f.id DESC
+		LIMIT #{limit}
+	</select>
+
+	<!-- その人（following_id）をフォローしている人（follower_id 側の users）。索引 ix_follows_following_id_id を使う -->
+	<select id="findFollowers" resultType="io.github.keiwebcreate.raisetechtimeline.follow.FollowUser">
+		SELECT <include refid="userColumns"/>
+		FROM follows f
+		JOIN users u ON u.id = f.follower_id
+		WHERE f.following_id = #{userId}
+		<if test="beforeId != null">
+			AND f.id &lt; #{beforeId}
+		</if>
+		ORDER BY f.id DESC
+		LIMIT #{limit}
+	</select>
+
+</mapper>

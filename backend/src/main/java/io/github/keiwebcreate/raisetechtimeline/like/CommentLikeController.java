@@ -44,8 +44,9 @@ public class CommentLikeController {
 	}
 
 	@GetMapping("/likes")
-	LikersResponse likers(@PathVariable long commentId, @RequestParam(required = false) @Nullable Long before) {
-		return likeService.commentLikers(commentId, before);
+	LikersResponse likers(@AuthenticationPrincipal LoginUser loginUser, @PathVariable long commentId,
+			@RequestParam(required = false) @Nullable Long before) {
+		return likeService.commentLikers(loginUser.id(), commentId, before);
 	}
 
 }

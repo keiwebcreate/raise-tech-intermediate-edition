@@ -3,7 +3,7 @@
 | 項目 | 内容 |
 |---|---|
 | 対象の機能 | L-01〜L-04（[機能一覧](../features.md) 1.5） |
-| 版 | 0.7（2026-11-15） |
+| 版 | 0.8（2026-11-15） |
 
 ## 1. 概要
 
@@ -84,7 +84,7 @@
 |---|---|
 | PUT `/api/posts/{id}/like` | 200 `{ liked: true, likeCount }`。もういいねしていても同じ返事（2回押し・同時に押しても 500 にしない。`INSERT … ON CONFLICT DO NOTHING`）／404 `POST_NOT_FOUND` |
 | DELETE `/api/posts/{id}/like` | 200 `{ liked: false, likeCount }`。いいねしていなくても同じ返事／404 `POST_NOT_FOUND` |
-| GET `/api/posts/{id}/likes?before=` | 200 `{ users: [{ id, username, displayName, iconUrl }], nextBefore }`。新しくいいねした順に20件。続きは `before` に `nextBefore` を入れて読む（なければ `null`）／404 `POST_NOT_FOUND` |
+| GET `/api/posts/{id}/likes?before=` | 200 `{ users: [{ id, username, displayName, bio, iconUrl, following, followedBy }], nextBefore }`。`bio` は自己紹介（なければ `null`）、`following` は見ている人がその人をフォローしているか、`followedBy` はその人が見ている人をフォローしているか（フォローボタン。[profile.md](profile.md) 4.3）。新しくいいねした順に20件。続きは `before` に `nextBefore` を入れて読む（なければ `null`）／404 `POST_NOT_FOUND` |
 | PUT `/api/comments/{id}/like` | コメント・返信へのいいね（L-04）。返事は投稿と同じ／404 `COMMENT_NOT_FOUND` |
 | DELETE `/api/comments/{id}/like` | コメント・返信のいいねの取り消し。返事は投稿と同じ／404 `COMMENT_NOT_FOUND` |
 | GET `/api/comments/{id}/likes?before=` | コメント・返信にいいねした人。返事は投稿と同じ／404 `COMMENT_NOT_FOUND` |
@@ -104,3 +104,4 @@
 | 0.5 | 2026-11-14 | コメント・返信へのいいねのサーバーの実装に合わせて、`/api/comments/{id}/like(s)` を 8章に追加 |
 | 0.6 | 2026-11-14 | アイコンの実装に合わせて、いいねした人に `iconUrl` を足した（8章） |
 | 0.7 | 2026-11-15 | いいねした人の名前・アイコンからプロフィールへ移れるようにした（7章） |
+| 0.8 | 2026-11-15 | フォローのサーバーの実装に合わせて、いいねした人に `bio`・`following`・`followedBy` を足した（8章） |

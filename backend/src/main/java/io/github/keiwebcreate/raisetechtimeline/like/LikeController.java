@@ -45,8 +45,9 @@ public class LikeController {
 	}
 
 	@GetMapping("/likes")
-	LikersResponse likers(@PathVariable long postId, @RequestParam(required = false) @Nullable Long before) {
-		return likeService.likers(postId, before);
+	LikersResponse likers(@AuthenticationPrincipal LoginUser loginUser, @PathVariable long postId,
+			@RequestParam(required = false) @Nullable Long before) {
+		return likeService.likers(loginUser.id(), postId, before);
 	}
 
 }

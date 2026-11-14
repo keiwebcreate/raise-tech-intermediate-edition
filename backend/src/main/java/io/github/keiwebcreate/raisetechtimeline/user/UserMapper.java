@@ -26,10 +26,14 @@ public interface UserMapper {
 	long insert(@Param("email") String email, @Param("passwordHash") String passwordHash,
 			@Param("username") String username, @Param("displayName") String displayName);
 
-	/** プロフィール（フォロー数・フォロワー数を含む）。ユーザー名は小文字にそろえてから渡す */
-	Optional<Profile> findProfileByUsername(@Param("username") String username);
+	/**
+	 * プロフィール（フォロー数・フォロワー数を含む）。ユーザー名は小文字にそろえてから渡す。
+	 *
+	 * @param viewerId 見ている人（following・followedBy を、この人から見た値にする）
+	 */
+	Optional<Profile> findProfileByUsername(@Param("username") String username, @Param("viewerId") long viewerId);
 
-	Optional<Profile> findProfileById(@Param("id") long id);
+	Optional<Profile> findProfileById(@Param("id") long id, @Param("viewerId") long viewerId);
 
 	/** 表示名・自己紹介・アイコンを変える。変えた行の数を返す */
 	int updateProfile(@Param("id") long id, @Param("displayName") String displayName,

@@ -6,6 +6,16 @@
 -->
 <mapper namespace="io.github.keiwebcreate.raisetechtimeline.like.LikeMapper">
 
+	<!--
+		いいねした人と、見ている人（viewerId）から見たフォローの状態（フォローボタン・「フォローされています」。like.md 4.3）。
+		状態は表示する行（20件）のぶんだけ同じ SQL の中で確かめる（N+1 問題を起こさない）。一意制約 uq_follows の索引で1行を探すだけ
+	-->
+	<sql id="likerColumns">
+		u.id AS user_id, u.username, u.display_name, u.bio, u.icon_image_key,
+		EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = #{viewerId} AND f.following_id = u.id) AS following,
+		EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = u.id AND f.following_id = #{viewerId}) AS followed_by
+	</sql>
+
 	<select id="postExists" resultType="boolean">
 		SELECT EXISTS (SELECT 1 FROM posts WHERE id = #{postId})
 	</select>
@@ -31,7 +41,7 @@
 
 	<!-- 新しくいいねした順（ID の大きい順）。索引 ix_likes_post_id_id を使う -->
 	<select id="findLikers" resultType="io.github.keiwebcreate.raisetechtimeline.like.Liker">
-		SELECT l.id AS like_id, u.id AS user_id, u.username, u.display_name, u.icon_image_key
+		SELECT l.id AS like_id, <include refid="likerColumns"/>
 		FROM likes l
 		JOIN users u ON u.id = l.user_id
 		WHERE l.post_id = #{postId}
@@ -65,7 +75,7 @@
 
 	<!-- 新しくいいねした順（ID の大きい順）。索引 ix_comment_likes_comment_id_id を使う -->
 	<select id="findCommentLikers" resultType="io.github.keiwebcreate.raisetechtimeline.like.Liker">
-		SELECT l.id AS like_id, u.id AS user_id, u.username, u.display_name, u.icon_image_key
+		SELECT l.id AS like_id, <include refid="likerColumns"/>
 		FROM comment_likes l
 		JOIN users u ON u.id = l.user_id
 		WHERE l.comment_id = #{commentId}

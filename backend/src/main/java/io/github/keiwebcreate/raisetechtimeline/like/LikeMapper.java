@@ -25,9 +25,11 @@ public interface LikeMapper {
 	/**
 	 * いいねした人。新しくいいねした順。
 	 *
+	 * @param viewerId 見ている人（following・followedBy を、この人から見た値にする）
 	 * @param beforeId このいいね（likes.id）より前のものだけ（続きを読むとき）。null なら最新から
 	 */
-	List<Liker> findLikers(@Param("postId") long postId, @Param("beforeId") @Nullable Long beforeId,
+	List<Liker> findLikers(@Param("postId") long postId, @Param("viewerId") long viewerId,
+			@Param("beforeId") @Nullable Long beforeId,
 			@Param("limit") int limit);
 
 	// ===== コメント・返信へのいいね（comment_likes。上の投稿へのいいねと同じ形） =====
@@ -41,7 +43,8 @@ public interface LikeMapper {
 	long countCommentLikes(@Param("commentId") long commentId);
 
 	/** @param beforeId このいいね（comment_likes.id）より前のものだけ。null なら最新から */
-	List<Liker> findCommentLikers(@Param("commentId") long commentId, @Param("beforeId") @Nullable Long beforeId,
+	List<Liker> findCommentLikers(@Param("commentId") long commentId, @Param("viewerId") long viewerId,
+			@Param("beforeId") @Nullable Long beforeId,
 			@Param("limit") int limit);
 
 }
