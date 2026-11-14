@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.github.keiwebcreate.raisetechtimeline.common.error.FieldValidationException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.PostNotFoundException;
+import io.github.keiwebcreate.raisetechtimeline.common.validation.ContentText;
 import io.github.keiwebcreate.raisetechtimeline.media.MediaKind;
 import io.github.keiwebcreate.raisetechtimeline.media.MediaService;
 import io.github.keiwebcreate.raisetechtimeline.post.dto.NewPostCountResponse;
@@ -31,8 +32,6 @@ public class PostService {
 	public static final int PAGE_SIZE = 20;
 	/** 「新しい投稿 N件」を数える上限 */
 	public static final int NEW_COUNT_MAX = 100;
-	/** 本文の文字数の上限（要件 2章） */
-	private static final int CONTENT_MAX = 280;
 	/** 画像の枚数の上限 */
 	private static final int IMAGE_MAX = 4;
 
@@ -113,7 +112,7 @@ public class PostService {
 
 	/**
 	 * 投稿を消す。画像・動画の行は ON DELETE CASCADE で一緒に消え、S3 のファイルはコミットのあとに消す
-	 * （コメント・いいねは、その機能を作るときに ON DELETE CASCADE で一緒に消える）。
+	 * （コメント・返信・いいねも ON DELETE CASCADE で一緒に消える）。
 	 *
 	 * @throws PostNotFoundException 投稿がない・他人の投稿
 	 */
@@ -208,19 +207,9 @@ public class PostService {
 				.toList();
 	}
 
-	/**
-	 * 前後の空白・改行を取り除き、1〜280文字かを確かめる。
-	 * 見た目の1文字を1文字と数える（絵文字も1文字。DB の varchar と同じ数え方。post.md 3.1）
-	 */
+	/** 前後の空白・改行を取り除き、1〜280文字かを確かめる（コメントと同じ決まり。ContentText） */
 	private static String normalize(String content) {
-		String value = content.strip();
-		if (value.isEmpty()) {
-			throw new FieldValidationException("content", "本文を入力してください");
-		}
-		if (value.codePointCount(0, value.length()) > CONTENT_MAX) {
-			throw new FieldValidationException("content", "280文字以内で入力してください");
-		}
-		return value;
+		return ContentText.normalize(content, "本文を入力してください");
 	}
 
 }

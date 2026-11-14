@@ -7,12 +7,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.github.keiwebcreate.raisetechtimeline.common.error.CommentNotFoundException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.PostNotFoundException;
 import io.github.keiwebcreate.raisetechtimeline.like.dto.LikeResponse;
 import io.github.keiwebcreate.raisetechtimeline.like.dto.LikersResponse;
 
 /**
- * 投稿へのいいね（docs/features/like.md）。自分の投稿にも、他の人の投稿にもいいねできる。
+ * 投稿とコメント・返信へのいいね（docs/features/like.md）。自分のものにも、他の人のものにもいいねできる。
  */
 @Service
 public class LikeService {
@@ -65,7 +66,53 @@ public class LikeService {
 	public LikersResponse likers(long postId, @Nullable Long before) {
 		requirePost(postId);
 		// 1件多く取って、続きがあるかを知る
-		List<Liker> rows = likeMapper.findLikers(postId, before, LIKERS_PAGE_SIZE + 1);
+		return toLikersResponse(likeMapper.findLikers(postId, before, LIKERS_PAGE_SIZE + 1));
+	}
+
+	// ===== コメント・返信へのいいね（like.md 4.4。投稿へのいいねと同じ決まり） =====
+
+	/**
+	 * コメント・返信にいいねする。もういいねしていても、エラーにせず「いいね済み」を返す。
+	 *
+	 * @throws CommentNotFoundException コメントがない
+	 */
+	@Transactional
+	public LikeResponse likeComment(long userId, long commentId) {
+		requireComment(commentId);
+		try {
+			likeMapper.insertCommentLike(commentId, userId);
+		} catch (DataIntegrityViolationException e) {
+			// 確かめた直後にコメントが消された（外部キーの違反）
+			throw new CommentNotFoundException();
+		}
+		return new LikeResponse(true, likeMapper.countCommentLikes(commentId));
+	}
+
+	/**
+	 * コメント・返信のいいねを取り消す。いいねしていなくても、エラーにしない。
+	 *
+	 * @throws CommentNotFoundException コメントがない
+	 */
+	@Transactional
+	public LikeResponse unlikeComment(long userId, long commentId) {
+		requireComment(commentId);
+		likeMapper.deleteCommentLike(commentId, userId);
+		return new LikeResponse(false, likeMapper.countCommentLikes(commentId));
+	}
+
+	/**
+	 * コメント・返信にいいねした人。新しくいいねした順に20件。
+	 *
+	 * @throws CommentNotFoundException コメントがない
+	 */
+	@Transactional(readOnly = true)
+	public LikersResponse commentLikers(long commentId, @Nullable Long before) {
+		requireComment(commentId);
+		return toLikersResponse(likeMapper.findCommentLikers(commentId, before, LIKERS_PAGE_SIZE + 1));
+	}
+
+	/** 1件多く読んだ rows から、20件と「続きがあるか」を返事にする */
+	private static LikersResponse toLikersResponse(List<Liker> rows) {
 		List<Liker> page = rows.stream().limit(LIKERS_PAGE_SIZE).toList();
 		Long nextBefore = rows.size() > LIKERS_PAGE_SIZE ? page.getLast().likeId() : null;
 		List<LikersResponse.User> users = page.stream()
@@ -77,6 +124,12 @@ public class LikeService {
 	private void requirePost(long postId) {
 		if (!likeMapper.postExists(postId)) {
 			throw new PostNotFoundException();
+		}
+	}
+
+	private void requireComment(long commentId) {
+		if (!likeMapper.commentExists(commentId)) {
+			throw new CommentNotFoundException();
 		}
 	}
 

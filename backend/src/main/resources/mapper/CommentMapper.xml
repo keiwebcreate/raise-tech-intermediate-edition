@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+	comments テーブルの SQL（CommentMapper.java）。
+	値は必ず #{} で渡す（${} は使わない）。SELECT * は使わず、必要な列を書く。
+	XML の中では「<」「>」をそのまま書けないので、&lt;（より小さい）・&gt;（より大きい）と書く。
+-->
+<mapper namespace="io.github.keiwebcreate.raisetechtimeline.comment.CommentMapper">
+
+	<!--
+		コメントと、書いた人の名前、返信先の人の @ユーザー名、いいね数、見ている人（viewerId）がいいねしているか、返信の数。
+		数は、表示する行（50件など）のぶんだけ、同じ SQL の中で数える。コメントごとに別の SQL を出さない（N+1 問題を起こさない）。
+		- like_count・liked：comment_likes の一意制約 (comment_id, user_id) の索引で数える
+		- reply_count：直接付いた返信（索引 ix_comments_parent_comment_id）
+		- thread_reply_count：一番上のコメントの下に並ぶ返信すべて（索引 ix_comments_root_comment_id_created_at）。返信の行なら 0
+	-->
+	<sql id="columns">
+		c.id, c.post_id, c.user_id, c.parent_comment_id, c.root_comment_id, c.content, c.created_at,
+		u.username AS author_username, u.display_name AS author_display_name,
+		pu.username AS reply_to_username,
+		(SELECT count(*) FROM comment_likes l WHERE l.comment_id = c.id) AS like_count,
+		EXISTS (SELECT 1 FROM comment_likes l WHERE l.comment_id = c.id AND l.user_id = #{viewerId}) AS liked,
+		(SELECT count(*) FROM comments r WHERE r.parent_comment_id = c.id) AS reply_count,
+		(SELECT count(*) FROM comments r WHERE r.root_comment_id = c.id) AS thread_reply_count
+	</sql>
+
+	<!-- 返信先のコメント（pc）と、それを書いた人（pu）。直接のコメントなら返信先がないので LEFT JOIN -->
+	<sql id="from">
+		FROM comments c
+		JOIN users u ON u.id = c.user_id
+		LEFT JOIN comments pc ON pc.id = c.parent_comment_id
+		LEFT JOIN users pu ON pu.id = pc.user_id
+	</sql>
+
+	<select id="postExists" resultType="boolean">
+		SELECT EXISTS (SELECT 1 FROM posts WHERE id = #{postId})
+	</select>
+
+	<select id="commentExists" resultType="boolean">
+		SELECT EXISTS (SELECT 1 FROM comments WHERE id = #{id})
+	</select>
+
+	<!--
+		並び順は (created_at, id) の古い順（会話の順。comment.md 4.2）。続きは「最後に読んだコメントより後のもの」で探すので、
+		途中でコメントが増えても、同じコメントが2回出たり抜けたりしない。部分索引 ix_comments_post_id_created_at を使う
+	-->
+	<select id="findTopLevel" resultType="io.github.keiwebcreate.raisetechtimeline.comment.Comment">
+		SELECT <include refid="columns"/>
+		<include refid="from"/>
+		WHERE c.post_id = #{postId} AND c.parent_comment_id IS NULL
+		<if test="afterId != null">
+			AND (c.created_at, c.id) &gt; (SELECT a.created_at, a.id FROM comments a WHERE a.id = #{afterId})
+		</if>
+		ORDER BY c.created_at, c.id
+		LIMIT #{limit}
+	</select>
+
+	<!-- 返信の返信も root_comment_id が同じなので、1回の SQL でまとめて読める（返信先をたどらなくてよい） -->
+	<select id="findReplies" resultType="io.github.keiwebcreate.raisetechtimeline.comment.Comment">
+		SELECT <include refid="columns"/>
+		<include refid="from"/>
+		WHERE c.root_comment_id = #{rootId}
+		ORDER BY c.created_at, c.id
+	</select>
+
+	<select id="findById" resultType="io.github.keiwebcreate.raisetechtimeline.comment.Comment">
+		SELECT <include refid="columns"/>
+		<include refid="from"/>
+		WHERE c.id = #{id}
+	</select>
+
+	<!-- RETURNING id で、足した行の ID を受け取る。足す処理なので、MyBatis の読み込みの控え（キャッシュ）を使わない -->
+	<select id="insertComment" resultType="long" flushCache="true" useCache="false">
+		INSERT INTO comments (post_id, user_id, content)
+		VALUES (#{postId}, #{userId}, #{content})
+		RETURNING id
+	</select>
+
+	<!--
+		返信先（pc）が「この投稿のコメント」のときだけ1行足す（違えば0行で、ID は返らない）。
+		一番上のコメントは、返信先が一番上ならその ID、返信先が返信ならその root_comment_id を写す。
+		確かめると足すを1つの SQL にしているので、確かめた直後に返信先が消されても、間違った行はできない（外部キーの違反になる）
+	-->
+	<select id="insertReply" resultType="long" flushCache="true" useCache="false">
+		INSERT INTO comments (post_id, user_id, parent_comment_id, root_comment_id, content)
+		SELECT pc.post_id, #{userId}, pc.id, COALESCE(pc.root_comment_id, pc.id), #{content}
+		FROM comments pc
+		WHERE pc.id = #{parentId} AND pc.post_id = #{postId}
+		RETURNING id
+	</select>
+
+	<!-- 本人のコメントかどうかを WHERE で確かめる（他人のものなら 0 行）。下の返信・いいねは ON DELETE CASCADE で消える -->
+	<delete id="delete">
+		DELETE FROM comments
+		WHERE id = #{id} AND user_id = #{userId}
+	</delete>
+
+</mapper>

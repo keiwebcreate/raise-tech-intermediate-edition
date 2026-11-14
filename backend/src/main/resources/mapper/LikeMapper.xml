@@ -42,4 +42,38 @@
 		LIMIT #{limit}
 	</select>
 
+	<!-- ===== コメント・返信へのいいね（comment_likes）。上の投稿へのいいねと同じ形 ===== -->
+
+	<select id="commentExists" resultType="boolean">
+		SELECT EXISTS (SELECT 1 FROM comments WHERE id = #{commentId})
+	</select>
+
+	<insert id="insertCommentLike">
+		INSERT INTO comment_likes (comment_id, user_id)
+		VALUES (#{commentId}, #{userId})
+		ON CONFLICT ON CONSTRAINT uq_comment_likes DO NOTHING
+	</insert>
+
+	<delete id="deleteCommentLike">
+		DELETE FROM comment_likes
+		WHERE comment_id = #{commentId} AND user_id = #{userId}
+	</delete>
+
+	<select id="countCommentLikes" resultType="long">
+		SELECT count(*) FROM comment_likes WHERE comment_id = #{commentId}
+	</select>
+
+	<!-- 新しくいいねした順（ID の大きい順）。索引 ix_comment_likes_comment_id_id を使う -->
+	<select id="findCommentLikers" resultType="io.github.keiwebcreate.raisetechtimeline.like.Liker">
+		SELECT l.id AS like_id, u.id AS user_id, u.username, u.display_name
+		FROM comment_likes l
+		JOIN users u ON u.id = l.user_id
+		WHERE l.comment_id = #{commentId}
+		<if test="beforeId != null">
+			AND l.id &lt; #{beforeId}
+		</if>
+		ORDER BY l.id DESC
+		LIMIT #{limit}
+	</select>
+
 </mapper>

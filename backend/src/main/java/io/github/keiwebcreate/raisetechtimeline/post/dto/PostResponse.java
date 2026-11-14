@@ -15,6 +15,7 @@ import io.github.keiwebcreate.raisetechtimeline.post.Post;
  * @param media 画像・動画（並び順）。なければ空
  * @param likeCount いいね数
  * @param liked 見ている人がいいねしているか（画面はハートを赤く塗る）
+ * @param commentCount コメント数（投稿に直接付いたものだけ。返信は数えない）
  */
 public record PostResponse(
 		long id,
@@ -25,7 +26,8 @@ public record PostResponse(
 		boolean mine,
 		List<Media> media,
 		long likeCount,
-		boolean liked) {
+		boolean liked,
+		long commentCount) {
 
 	/** 投稿した人。メールアドレスは他人に見せないので入れない */
 	public record Author(long id, String username, String displayName) {
@@ -44,7 +46,8 @@ public record PostResponse(
 	public static PostResponse from(Post post, long viewerId, List<Media> media) {
 		Author author = new Author(post.userId(), post.authorUsername(), post.authorDisplayName());
 		return new PostResponse(post.id(), post.content(), post.createdAt(), post.editedAt(), author,
-				post.userId() == viewerId, media, post.likeCount(), post.liked());
+				post.userId() == viewerId, media, post.likeCount(), post.liked(),
+				post.commentCount());
 	}
 
 }

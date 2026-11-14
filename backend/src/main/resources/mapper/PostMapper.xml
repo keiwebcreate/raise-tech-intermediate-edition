@@ -8,15 +8,18 @@
 <mapper namespace="io.github.keiwebcreate.raisetechtimeline.post.PostMapper">
 
 	<!--
-		投稿と、投稿した人の名前、いいね数、見ている人（viewerId）がいいねしているか。
-		いいねは、表示する行（タイムラインなら20件）のぶんだけ、同じ SQL の中で数える。
-		投稿ごとに別の SQL を出さない（N+1 問題を起こさない）。likes の一意制約 (post_id, user_id) の索引で数えるので速い
+		投稿と、投稿した人の名前、いいね数、見ている人（viewerId）がいいねしているか、コメント数。
+		数は、表示する行（タイムラインなら20件）のぶんだけ、同じ SQL の中で数える。
+		投稿ごとに別の SQL を出さない（N+1 問題を起こさない）。
+		いいねは likes の一意制約 (post_id, user_id) の索引、コメントは部分索引 ix_comments_post_id_created_at で数えるので速い。
+		コメント数は投稿に直接付いたものだけ（返信は数えない。docs/features/comment.md 4.3）
 	-->
 	<sql id="columns">
 		p.id, p.user_id, p.content, p.edited_at, p.created_at,
 		u.username AS author_username, u.display_name AS author_display_name,
 		(SELECT count(*) FROM likes l WHERE l.post_id = p.id) AS like_count,
-		EXISTS (SELECT 1 FROM likes l WHERE l.post_id = p.id AND l.user_id = #{viewerId}) AS liked
+		EXISTS (SELECT 1 FROM likes l WHERE l.post_id = p.id AND l.user_id = #{viewerId}) AS liked,
+		(SELECT count(*) FROM comments c WHERE c.post_id = p.id AND c.parent_comment_id IS NULL) AS comment_count
 	</sql>
 
 	<!-- 「フォロー中」タブの絞り込み：自分の投稿と、自分がフォローしている人の投稿 -->
