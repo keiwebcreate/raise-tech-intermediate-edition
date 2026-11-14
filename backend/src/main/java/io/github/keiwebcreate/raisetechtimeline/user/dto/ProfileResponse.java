@@ -14,6 +14,8 @@ import org.jspecify.annotations.Nullable;
  * @param followingCount フォローしている人の数
  * @param followerCount フォローされている人の数
  * @param mine 見ている人のプロフィールか（画面は「プロフィールを編集」を出す）
+ * @param following 見ている人が、この人をフォローしているか（フォローボタン。profile.md 4.3）
+ * @param followedBy この人が、見ている人をフォローしているか（「フォローされています」・「フォローバック」。4.2）
  */
 public record ProfileResponse(
 		long id,
@@ -25,5 +27,7 @@ public record ProfileResponse(
 		OffsetDateTime createdAt,
 		long followingCount,
 		long followerCount,
-		boolean mine) {
+		boolean mine,
+		boolean following,
+		boolean followedBy) {
 }

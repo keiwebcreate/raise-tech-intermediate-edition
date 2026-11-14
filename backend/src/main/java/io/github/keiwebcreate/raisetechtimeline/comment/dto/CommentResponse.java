@@ -36,8 +36,11 @@ public record CommentResponse(
 	 * 書いた人。メールアドレスは他人に見せないので入れない。
 	 *
 	 * @param iconUrl アイコンを見るための期限付きの URL。未設定なら null
+	 * @param following 見ている人が、この人をフォローしているか（コメントの行のフォローボタン）
+	 * @param followedBy この人が、見ている人をフォローしているか（「フォローバック」）
 	 */
-	public record Author(long id, String username, String displayName, @Nullable String iconUrl) {
+	public record Author(long id, String username, String displayName, @Nullable String iconUrl,
+			boolean following, boolean followedBy) {
 	}
 
 	/** 返信先のコメントを書いた人 */
@@ -46,7 +49,7 @@ public record CommentResponse(
 
 	public static CommentResponse from(Comment comment, long viewerId, @Nullable String iconUrl) {
 		Author author = new Author(comment.userId(), comment.authorUsername(), comment.authorDisplayName(),
-				iconUrl);
+				iconUrl, comment.authorFollowing(), comment.authorFollowedBy());
 		String replyToUsername = comment.replyToUsername();
 		ReplyTo replyTo = replyToUsername == null ? null : new ReplyTo(replyToUsername);
 		return new CommentResponse(comment.id(), comment.postId(), comment.parentCommentId(),

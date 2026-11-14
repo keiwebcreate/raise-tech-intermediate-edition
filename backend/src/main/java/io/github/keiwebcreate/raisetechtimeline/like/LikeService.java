@@ -66,10 +66,10 @@ public class LikeService {
 	 * @throws PostNotFoundException 投稿がない
 	 */
 	@Transactional(readOnly = true)
-	public LikersResponse likers(long postId, @Nullable Long before) {
+	public LikersResponse likers(long viewerId, long postId, @Nullable Long before) {
 		requirePost(postId);
 		// 1件多く取って、続きがあるかを知る
-		return toLikersResponse(likeMapper.findLikers(postId, before, LIKERS_PAGE_SIZE + 1));
+		return toLikersResponse(likeMapper.findLikers(postId, viewerId, before, LIKERS_PAGE_SIZE + 1));
 	}
 
 	// ===== コメント・返信へのいいね（like.md 4.4。投稿へのいいねと同じ決まり） =====
@@ -109,9 +109,9 @@ public class LikeService {
 	 * @throws CommentNotFoundException コメントがない
 	 */
 	@Transactional(readOnly = true)
-	public LikersResponse commentLikers(long commentId, @Nullable Long before) {
+	public LikersResponse commentLikers(long viewerId, long commentId, @Nullable Long before) {
 		requireComment(commentId);
-		return toLikersResponse(likeMapper.findCommentLikers(commentId, before, LIKERS_PAGE_SIZE + 1));
+		return toLikersResponse(likeMapper.findCommentLikers(commentId, viewerId, before, LIKERS_PAGE_SIZE + 1));
 	}
 
 	/** 1件多く読んだ rows から、20件と「続きがあるか」を返事にする */
@@ -120,7 +120,8 @@ public class LikeService {
 		Long nextBefore = rows.size() > LIKERS_PAGE_SIZE ? page.getLast().likeId() : null;
 		List<LikersResponse.User> users = page.stream()
 				.map(liker -> new LikersResponse.User(liker.userId(), liker.username(), liker.displayName(),
-						mediaService.iconUrl(liker.iconImageKey())))
+						liker.bio(), mediaService.iconUrl(liker.iconImageKey()), liker.following(),
+						liker.followedBy()))
 				.toList();
 		return new LikersResponse(users, nextBefore);
 	}

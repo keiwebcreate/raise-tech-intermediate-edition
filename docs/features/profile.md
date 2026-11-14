@@ -3,7 +3,7 @@
 | 項目 | 内容 |
 |---|---|
 | 対象の機能 | PF-01・PF-02、FL-01〜FL-04（[機能一覧](../features.md) 1.6・1.7） |
-| 版 | 0.3（2026-11-15） |
+| 版 | 0.4（2026-11-15） |
 
 ## 1. 概要
 
@@ -119,6 +119,11 @@ URL は `/users/{ユーザー名}`。
   - プロフィールの投稿が0件のときは「まだ投稿がありません」
   - 編集を保存したら、プロフィールの「プロフィールを編集」から来たときはひとつ前（そのプロフィール）へ戻る。URL を直接開いたときは自分のプロフィールへ移る
   - 編集を保存したら、左のメニューの名前・アイコンもすぐにそろえる。すでに出ている投稿の名前・アイコンは、読み直したときに変わる
+- フォローの API（2026-11-15、フォローのサーバーのとき）
+  - 相手は URL のユーザー名で指す（ユーザーの決定。プロフィールの API・画面の URL と同じ）。大文字・小文字は区別しない
+  - 自分自身をフォロー・解除しようとしたら 400 `CANNOT_FOLLOW_SELF`「自分自身はフォローできません」（画面は自分にボタンを出さないので、ふつうは起きない。解除も断るのは品質チェックでの決定）
+  - フォロー・解除の返事に、相手の今のフォロワー数を入れる（プロフィールの数をそろえるため）
+  - 一覧の続きの目印（`nextBefore`）は、フォローの行の ID（いいねした人の一覧と同じ作り）
 
 ## 8. API
 
@@ -130,9 +135,15 @@ URL は `/users/{ユーザー名}`。
 | GET `/api/users/{ユーザー名}/posts?before=` | なし | 200 `{ posts: [Post], hasMore }`（[timeline.md](timeline.md) と同じ形。新しい順に20件）／404 `USER_NOT_FOUND` |
 | POST `/api/media/icons` | multipart の `file`（JPEG・PNG・WebP、5MB まで） | 201 `{ key, url }`（正方形の 400×400 の WebP にして一時置き場に置く）／400 `VALIDATION_ERROR`（`errors[].field` は `file`。「JPEG・PNG・WebP の画像を選んでください」「画像は5MBまでです」） |
 | PUT `/api/users/me` | `{ displayName, bio?, iconKey? }` | 200 Profile／400 `VALIDATION_ERROR`（`errors[].field` は `displayName`・`bio`・`iconKey`） |
+| PUT `/api/users/{ユーザー名}/follow` | なし | 200 `{ following: true, followerCount }`（`followerCount` は相手の今のフォロワー数）。もうフォローしていても同じ返事（2回押し・同時に押しても 500 にしない）／400 `CANNOT_FOLLOW_SELF`（「自分自身はフォローできません」）／404 `USER_NOT_FOUND` |
+| DELETE `/api/users/{ユーザー名}/follow` | なし | 200 `{ following: false, followerCount }`。フォローしていなくても同じ返事／400 `CANNOT_FOLLOW_SELF`（自分自身）／404 `USER_NOT_FOUND` |
+| GET `/api/users/{ユーザー名}/following?before=` | なし | 200 `{ users: [FollowUser], nextBefore }`。その人がフォローしている人を、新しくフォローした順に20件。続きは `before` に `nextBefore` を入れて読む（なければ `null`）／404 `USER_NOT_FOUND` |
+| GET `/api/users/{ユーザー名}/followers?before=` | なし | 200 `{ users: [FollowUser], nextBefore }`。その人のフォロワーを、新しくフォローされた順に20件／404 `USER_NOT_FOUND` |
 
 - `iconKey`：今のキー（Profile の `iconKey`）なら「残す」、`/api/media/icons` で送った一時置き場のキーなら「差し替える」、`null` なら「外す」。他人のもの・投稿の画像のキー・もうないものは「画像が見つかりません。選び直してください」
 - 編集できるのは本人だけ（URL に人を指定させず、ログインしている本人を変える）
+- フォローは「ログインしている本人が」相手をフォローする（URL に指定するのは相手だけ）。フォローを PUT、解除を DELETE にしたのは、何回送っても結果が同じになるようにするため（いいねと同じ）
+- フォローの状態（`following`・`followedBy`）は、プロフィール・フォロー中とフォロワーの一覧・いいねした人（[like.md](like.md) 8章）・コメントの `author`（[comment.md](comment.md) 8章）の返事にある。一覧でも SQL は増えない
 - 投稿・コメント・いいねした人・ログイン中の本人（`/api/auth/me`）の返事の、ユーザーの形に `iconUrl`（アイコンを見るための期限付き URL。未設定なら `null`）がある。一覧でも SQL は増えない
 
 **Profile の形**
@@ -146,6 +157,17 @@ URL は `/users/{ユーザー名}`。
 | `createdAt` | 登録した日時（「2026年11月から利用しています」） |
 | `followingCount`・`followerCount` | フォロー数・フォロワー数 |
 | `mine` | 見ている人のプロフィールか（`true` なら「プロフィールを編集」） |
+| `following` | 見ている人がこの人をフォローしているか（フォローボタン。4.3） |
+| `followedBy` | この人が見ている人をフォローしているか（「フォローされています」・「フォローバック」。4.2） |
+
+**FollowUser の形**（フォロー中・フォロワーの一覧の1人）
+
+| 項目 | 内容 |
+|---|---|
+| `id`・`username`・`displayName` | |
+| `bio` | 自己紹介。なければ `null`（画面は1行まで出す） |
+| `iconUrl` | アイコンの期限付き URL。未設定なら `null` |
+| `following`・`followedBy` | Profile と同じ（見ている人から見たフォローの状態） |
 
 ## 9. 改訂履歴
 
@@ -154,3 +176,4 @@ URL は `/users/{ユーザー名}`。
 | 0.1 | 2026-11-08 | たたき台を作成 |
 | 0.2 | 2026-11-14 | プロフィールのサーバーの実装に合わせて API（8章）を追加。アイコンの送り方・形、フォロー数を先に出すこと、アイコンを出す場所を 7章に追加 |
 | 0.3 | 2026-11-15 | プロフィールの画面の実装に合わせて、編集の確かめ方・アイコンの送り方・入力の誤りの出し方（3.2）と、画面の作り（7章）を追加 |
+| 0.4 | 2026-11-15 | フォローのサーバーの実装に合わせて、フォロー・解除・一覧の API と Profile の `following`・`followedBy`・FollowUser の形（8章）、決めたこと（7章）を追加 |

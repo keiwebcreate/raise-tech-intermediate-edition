@@ -40,12 +40,15 @@
 
 	<!--
 		プロフィール。フォロー数・フォロワー数は follows から数える（数の列は持たない。database-design.md 4章）。
-		フォロー数は一意制約 (follower_id, following_id) の索引、フォロワー数は ix_follows_following_id の索引で数える
+		フォロー数は一意制約 (follower_id, following_id) の索引、フォロワー数は ix_follows_following_id_id の索引で数える。
+		following・followed_by：見ている人（viewerId）から見たフォローの状態（一意制約の索引で1行を探すだけ）
 	-->
 	<sql id="profileColumns">
 		u.id, u.username, u.display_name, u.bio, u.icon_image_key, u.created_at,
 		(SELECT count(*) FROM follows f WHERE f.follower_id = u.id) AS following_count,
-		(SELECT count(*) FROM follows f WHERE f.following_id = u.id) AS follower_count
+		(SELECT count(*) FROM follows f WHERE f.following_id = u.id) AS follower_count,
+		EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = #{viewerId} AND f.following_id = u.id) AS following,
+		EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = u.id AND f.following_id = #{viewerId}) AS followed_by
 	</sql>
 
 	<select id="findProfileByUsername" resultType="io.github.keiwebcreate.raisetechtimeline.user.Profile">

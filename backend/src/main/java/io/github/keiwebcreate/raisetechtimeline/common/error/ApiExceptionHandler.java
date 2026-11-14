@@ -85,6 +85,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		return problem(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", e.getMessage());
 	}
 
+	@ExceptionHandler(CannotFollowSelfException.class)
+	ResponseEntity<ProblemDetail> handleCannotFollowSelf(CannotFollowSelfException e) {
+		return problem(HttpStatus.BAD_REQUEST, "CANNOT_FOLLOW_SELF", e.getMessage());
+	}
+
 	@ExceptionHandler(CommentNotFoundException.class)
 	ResponseEntity<ProblemDetail> handleCommentNotFound(CommentNotFoundException e) {
 		return problem(HttpStatus.NOT_FOUND, "COMMENT_NOT_FOUND", e.getMessage());

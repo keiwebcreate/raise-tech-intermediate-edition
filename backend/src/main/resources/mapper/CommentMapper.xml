@@ -13,6 +13,7 @@
 		- like_count・liked：comment_likes の一意制約 (comment_id, user_id) の索引で数える
 		- reply_count：直接付いた返信（索引 ix_comments_parent_comment_id）
 		- thread_reply_count：一番上のコメントの下に並ぶ返信すべて（索引 ix_comments_root_comment_id_created_at）。返信の行なら 0
+		- author_following・author_followed_by：見ている人と書いた人のフォローの状態（一意制約 uq_follows の索引）
 	-->
 	<sql id="columns">
 		c.id, c.post_id, c.user_id, c.parent_comment_id, c.root_comment_id, c.content, c.created_at,
@@ -21,7 +22,9 @@
 		(SELECT count(*) FROM comment_likes l WHERE l.comment_id = c.id) AS like_count,
 		EXISTS (SELECT 1 FROM comment_likes l WHERE l.comment_id = c.id AND l.user_id = #{viewerId}) AS liked,
 		(SELECT count(*) FROM comments r WHERE r.parent_comment_id = c.id) AS reply_count,
-		(SELECT count(*) FROM comments r WHERE r.root_comment_id = c.id) AS thread_reply_count
+		(SELECT count(*) FROM comments r WHERE r.root_comment_id = c.id) AS thread_reply_count,
+		EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = #{viewerId} AND f.following_id = c.user_id) AS author_following,
+		EXISTS (SELECT 1 FROM follows f WHERE f.follower_id = c.user_id AND f.following_id = #{viewerId}) AS author_followed_by
 	</sql>
 
 	<!-- 返信先のコメント（pc）と、それを書いた人（pu）。直接のコメントなら返信先がないので LEFT JOIN -->

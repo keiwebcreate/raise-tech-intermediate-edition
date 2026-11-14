@@ -13,6 +13,8 @@ import org.jspecify.annotations.Nullable;
  * @param createdAt 登録した日時（「2026年11月から利用しています」）
  * @param followingCount フォローしている人の数
  * @param followerCount フォローされている人の数
+ * @param following 見ている人が、この人をフォローしているか
+ * @param followedBy この人が、見ている人をフォローしているか（「フォローされています」）
  */
 public record Profile(
 		long id,
@@ -22,5 +24,7 @@ public record Profile(
 		@Nullable String iconImageKey,
 		OffsetDateTime createdAt,
 		long followingCount,
-		long followerCount) {
+		long followerCount,
+		boolean following,
+		boolean followedBy) {
 }

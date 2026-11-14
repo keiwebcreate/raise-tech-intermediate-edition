@@ -40,7 +40,7 @@ public class UserService {
 	 */
 	@Transactional(readOnly = true)
 	public ProfileResponse profile(long viewerId, String username) {
-		return toResponse(findByUsername(username), viewerId);
+		return toResponse(findByUsername(username, viewerId), viewerId);
 	}
 
 	/**
@@ -51,7 +51,7 @@ public class UserService {
 	 */
 	@Transactional(readOnly = true)
 	public TimelineResponse posts(long viewerId, String username, @Nullable Long before) {
-		return postService.postsByAuthor(viewerId, findByUsername(username).id(), before);
+		return postService.postsByAuthor(viewerId, findByUsername(username, viewerId).id(), before);
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class UserService {
 	public ProfileResponse update(long userId, ProfileUpdateRequest request) {
 		String displayName = ProfileText.displayName(request.displayName());
 		String bio = ProfileText.bio(request.bio());
-		Profile current = userMapper.findProfileById(userId).orElseThrow(UserNotFoundException::new);
+		Profile current = userMapper.findProfileById(userId, userId).orElseThrow(UserNotFoundException::new);
 		String currentKey = current.iconImageKey();
 		String requestedKey = request.iconKey();
 
@@ -86,19 +86,20 @@ public class UserService {
 
 		userMapper.updateProfile(userId, displayName, bio, newKey);
 		mediaService.deleteAfterCommit(deleteAfterCommit);
-		return toResponse(userMapper.findProfileById(userId).orElseThrow(UserNotFoundException::new), userId);
+		return toResponse(userMapper.findProfileById(userId, userId).orElseThrow(UserNotFoundException::new), userId);
 	}
 
-	private Profile findByUsername(String username) {
+	private Profile findByUsername(String username, long viewerId) {
 		// ユーザー名は小文字で保存している（Taro と taro を同じ人とみなす）
-		return userMapper.findProfileByUsername(username.toLowerCase(Locale.ROOT))
+		return userMapper.findProfileByUsername(username.toLowerCase(Locale.ROOT), viewerId)
 				.orElseThrow(UserNotFoundException::new);
 	}
 
 	private ProfileResponse toResponse(Profile profile, long viewerId) {
 		return new ProfileResponse(profile.id(), profile.username(), profile.displayName(), profile.bio(),
 				mediaService.iconUrl(profile.iconImageKey()), profile.iconImageKey(), profile.createdAt(),
-				profile.followingCount(), profile.followerCount(), profile.id() == viewerId);
+				profile.followingCount(), profile.followerCount(), profile.id() == viewerId, profile.following(),
+				profile.followedBy());
 	}
 
 }

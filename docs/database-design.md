@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.8 |
+| 版 | 0.9 |
 | 作成日 | 2026-11-08 |
 | 状態 | たたき台（ユーザーの確認待ち） |
 | データベース | PostgreSQL 18 |
@@ -239,7 +239,8 @@ erDiagram
 | likes | `(post_id, user_id)`（一意） | いいね数・自分がいいねしたか |
 | likes | `post_id, id DESC` | いいねした人の一覧（新しい順） |
 | follows | `(follower_id, following_id)`（一意） | フォロー中か・フォロー数・「フォロー中」タブ |
-| follows | `following_id` | フォロワー数・フォロワーの一覧 |
+| follows | `follower_id, id` | フォロー中の一覧（新しくフォローした順） |
+| follows | `following_id, id` | フォロワー数・フォロワーの一覧（新しくフォローされた順） |
 | refresh_tokens | `token_hash`（一意） | 更新・ログアウトのときにトークンを探す |
 | refresh_tokens | `user_id` | 使い回しを見つけたとき、その人のトークンをまとめて取り消す |
 | refresh_tokens | `expires_at` | 期限切れをまとめて消す（1日1回） |
@@ -297,7 +298,7 @@ erDiagram
 - コメントへのいいねは、投稿のいいねと別のテーブル（`comment_likes`）にする
 - 投稿の画像・動画は `post_media` テーブルに分ける（`posts.image_key` はなくした）
 - リフレッシュトークンの `refresh_tokens` テーブルを足す（ハッシュだけ保存）
-- テーブルは機能を作るときに Flyway で足していく。今あるのは `users`（V1）・`refresh_tokens`（V2）・`posts`（V3）・`follows`（V4）・`post_media`（V5）・`likes`（V6。いいねした人の一覧のため `(post_id, id DESC)` の索引も作った）・`comments`（V7）・`comment_likes`（V8）
+- テーブルは機能を作るときに Flyway で足していく。今あるのは `users`（V1）・`refresh_tokens`（V2）・`posts`（V3）・`follows`（V4）・`post_media`（V5）・`likes`（V6。いいねした人の一覧のため `(post_id, id DESC)` の索引も作った）・`comments`（V7）・`comment_likes`（V8）。V9 で `follows` の一覧の索引を `(follower_id, id)`・`(following_id, id)` にした（`following_id` だけの索引は置きかえた）
 - `follows` は、フォローの画面より先に、投稿と一緒に作った（「フォロー中」タブの SQL を最終の形にするため）
 - `posts` の索引には `id DESC` も入れた（同じ時刻の投稿を ID の大きい順に並べ、続きの読み込みで抜けも重なりも出さないため）
 
@@ -313,3 +314,4 @@ erDiagram
 | 0.6 | 2026-11-08 | いいねの実装に合わせて `likes`（V6）を作った（3.4 のとおり。索引 `(post_id, id DESC)` を足した） |
 | 0.7 | 2026-11-14 | コメントの実装に合わせて `comments`（V7）・`comment_likes`（V8）を作った。`comments.root_comment_id` と CHECK 制約を足し、索引（4章）を実際のものに直した（作っていない `user_id` の索引を外し、退会の機能のときに足すと書いた） |
 | 0.8 | 2026-11-14 | アイコンの実装に合わせて、6章のキーの形（一時置き場は利用者 ID ごと、アイコンは別の場所）を実際のものに直した |
+| 0.9 | 2026-11-15 | フォローの実装に合わせて、`follows` の一覧の索引（V9：`(follower_id, id)`・`(following_id, id)`）を 4章・8章に書いた |
