@@ -16,7 +16,7 @@
 	-->
 	<sql id="columns">
 		p.id, p.user_id, p.content, p.edited_at, p.created_at,
-		u.username AS author_username, u.display_name AS author_display_name,
+		u.username AS author_username, u.display_name AS author_display_name, u.icon_image_key AS author_icon_image_key,
 		(SELECT count(*) FROM likes l WHERE l.post_id = p.id) AS like_count,
 		EXISTS (SELECT 1 FROM likes l WHERE l.post_id = p.id AND l.user_id = #{viewerId}) AS liked,
 		(SELECT count(*) FROM comments c WHERE c.post_id = p.id AND c.parent_comment_id IS NULL) AS comment_count
@@ -65,6 +65,19 @@
 			</if>
 			LIMIT #{max}
 		) AS newer
+	</select>
+
+	<!-- 並べ方・続きの読み方はタイムラインと同じ。索引 ix_posts_user_id_created_at を使う -->
+	<select id="findByAuthor" resultType="io.github.keiwebcreate.raisetechtimeline.post.Post">
+		SELECT <include refid="columns"/>
+		FROM posts p
+		JOIN users u ON u.id = p.user_id
+		WHERE p.user_id = #{authorId}
+		<if test="beforeId != null">
+			AND (p.created_at, p.id) &lt; (SELECT b.created_at, b.id FROM posts b WHERE b.id = #{beforeId})
+		</if>
+		ORDER BY p.created_at DESC, p.id DESC
+		LIMIT #{limit}
 	</select>
 
 	<select id="findById" resultType="io.github.keiwebcreate.raisetechtimeline.post.Post">

@@ -3,7 +3,7 @@
 | 項目 | 内容 |
 |---|---|
 | 対象の機能 | A-01〜A-04（[機能一覧](../features.md) 1.1） |
-| 版 | 0.3（2026-11-08） |
+| 版 | 0.4（2026-11-14） |
 
 ## 1. 概要
 
@@ -162,7 +162,7 @@ sequenceDiagram
 
 | メソッド・URL | ログイン | 送るもの | 返事 |
 |---|---|---|---|
-| POST `/api/auth/signup` | 不要 | `email`・`password`・`username`・`displayName` | 201＋2つの Cookie＋本人（`id`・`email`・`username`・`displayName`）／400・409 |
+| POST `/api/auth/signup` | 不要 | `email`・`password`・`username`・`displayName` | 201＋2つの Cookie＋本人（`id`・`email`・`username`・`displayName`・`iconUrl`）／400・409 |
 | POST `/api/auth/login` | 不要 | `email`・`password` | 200＋2つの Cookie＋本人／401 `LOGIN_FAILED`／429 `RATE_LIMITED`（`Retry-After` ヘッダー） |
 | POST `/api/auth/refresh` | 不要（Cookie `REFRESH_TOKEN` で確かめる） | なし | 200＋新しい2つの Cookie＋本人／401 `REFRESH_INVALID`（2つの Cookie を消す） |
 | POST `/api/auth/logout` | 不要（期限切れでも Cookie を消せるように） | なし | 204（リフレッシュトークンを取り消し、2つの Cookie を消す） |
@@ -187,3 +187,4 @@ sequenceDiagram
 | 0.1 | 2026-11-08 | たたき台を作成 |
 | 0.2 | 2026-11-08 | 実装に合わせて、アクセストークン＋リフレッシュトークン・Cookie・CSRF の仕組み（7章）と API（8章）を追加。講義との違いと理由を書いた |
 | 0.3 | 2026-11-08 | ログアウトの後に「戻る」を押したときの扱いを追加（4.3。Chrome DevTools MCP での確認で見つかった）。JWT の署名の方式を HS256 に固定（実装が鍵の長さで HS384 になっていた） |
+| 0.4 | 2026-11-14 | アイコンの実装に合わせて、本人の返事に `iconUrl` を足した（8章） |

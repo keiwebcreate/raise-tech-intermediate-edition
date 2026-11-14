@@ -11,6 +11,7 @@ import io.github.keiwebcreate.raisetechtimeline.common.error.CommentNotFoundExce
 import io.github.keiwebcreate.raisetechtimeline.common.error.PostNotFoundException;
 import io.github.keiwebcreate.raisetechtimeline.like.dto.LikeResponse;
 import io.github.keiwebcreate.raisetechtimeline.like.dto.LikersResponse;
+import io.github.keiwebcreate.raisetechtimeline.media.MediaService;
 
 /**
  * 投稿とコメント・返信へのいいね（docs/features/like.md）。自分のものにも、他の人のものにもいいねできる。
@@ -22,9 +23,11 @@ public class LikeService {
 	public static final int LIKERS_PAGE_SIZE = 20;
 
 	private final LikeMapper likeMapper;
+	private final MediaService mediaService;
 
-	public LikeService(LikeMapper likeMapper) {
+	public LikeService(LikeMapper likeMapper, MediaService mediaService) {
 		this.likeMapper = likeMapper;
+		this.mediaService = mediaService;
 	}
 
 	/**
@@ -112,11 +115,12 @@ public class LikeService {
 	}
 
 	/** 1件多く読んだ rows から、20件と「続きがあるか」を返事にする */
-	private static LikersResponse toLikersResponse(List<Liker> rows) {
+	private LikersResponse toLikersResponse(List<Liker> rows) {
 		List<Liker> page = rows.stream().limit(LIKERS_PAGE_SIZE).toList();
 		Long nextBefore = rows.size() > LIKERS_PAGE_SIZE ? page.getLast().likeId() : null;
 		List<LikersResponse.User> users = page.stream()
-				.map(liker -> new LikersResponse.User(liker.userId(), liker.username(), liker.displayName()))
+				.map(liker -> new LikersResponse.User(liker.userId(), liker.username(), liker.displayName(),
+						mediaService.iconUrl(liker.iconImageKey())))
 				.toList();
 		return new LikersResponse(users, nextBefore);
 	}

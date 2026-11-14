@@ -24,6 +24,7 @@ import com.luciad.imageio.webp.WebPWriteParam;
 
 import io.github.keiwebcreate.raisetechtimeline.common.error.FieldValidationException;
 import net.coobird.thumbnailator.Thumbnails;
+import net.coobird.thumbnailator.geometry.Positions;
 
 /**
  * 送られた画像を確かめて、保存する形（WebP）にする（docs/features/post.md 3.2）。
@@ -32,6 +33,8 @@ import net.coobird.thumbnailator.Thumbnails;
  * 2. 縦横の大きさを先に読み、大きすぎるものは展開する前に断る（小さなファイルで巨大な画像を作り、メモリを使い切らせる攻撃を防ぐ）
  * 3. 写真の向き（Exif の Orientation）を見て回し、横 1600px 以下に縮小する。小さい画像は大きくしない
  * 4. WebP で書き直す。書き直すので、位置情報などの Exif は残らない。GIF は1枚目だけになる
+ *
+ * アイコン（docs/features/profile.md 3.2）は、JPEG・PNG・WebP だけを受け付け、真ん中を正方形に切り取って 400×400 にする。
  */
 @Component
 public class ImageProcessor {
@@ -49,8 +52,15 @@ public class ImageProcessor {
 	static final String MESSAGE_SIZE = "画像は1枚5MBまでです";
 	static final String MESSAGE_PIXELS = "画像の縦横が大きすぎます";
 
+	/** アイコンの縦横（正方形。docs/features/profile.md 3.2） */
+	static final int ICON_SIZE = 400;
+	static final String MESSAGE_ICON_TYPE = "JPEG・PNG・WebP の画像を選んでください";
+	static final String MESSAGE_ICON_SIZE = "画像は5MBまでです";
+
 	// ImageIO の形式の名前（小文字にしたもの）
 	private static final Set<String> ACCEPTED = Set.of("jpeg", "png", "webp", "gif");
+	// アイコンは GIF を受け付けない（profile.md 3.2）
+	private static final Set<String> ACCEPTED_ICON = Set.of("jpeg", "png", "webp");
 
 	public ImageProcessor() {
 		// WebP の読み書きの道具（jar の中の部品）を ImageIO に登録し直す。
@@ -60,26 +70,46 @@ public class ImageProcessor {
 
 	/** 確かめて、WebP にしたデータを返す。だめなら FieldValidationException（field は file） */
 	public byte[] toWebp(byte[] data) {
-		if (data.length == 0) {
-			throw invalid(MESSAGE_TYPE);
-		}
-		if (data.length > MAX_BYTES) {
-			throw invalid(MESSAGE_SIZE);
-		}
-		checkFormatAndPixels(data);
-		return encode(resize(decode(data)));
+		check(data, ACCEPTED, MESSAGE_TYPE, MESSAGE_SIZE);
+		return encode(resize(decode(data, MESSAGE_TYPE)));
 	}
 
-	private static void checkFormatAndPixels(byte[] data) {
+	/**
+	 * アイコン用。確かめて、真ん中を正方形に切り取り、400×400 の WebP にしたデータを返す。
+	 * 小さい画像も 400×400 にそろえる（どこに出しても同じ形になるように）
+	 */
+	public byte[] toIconWebp(byte[] data) {
+		check(data, ACCEPTED_ICON, MESSAGE_ICON_TYPE, MESSAGE_ICON_SIZE);
+		BufferedImage icon;
+		try {
+			icon = Thumbnails.of(decode(data, MESSAGE_ICON_TYPE)).crop(Positions.CENTER).size(ICON_SIZE, ICON_SIZE)
+					.imageType(BufferedImage.TYPE_INT_ARGB).asBufferedImage();
+		} catch (IOException e) {
+			throw new IllegalStateException("アイコンを作れませんでした", e);
+		}
+		return encode(dropAlphaIfOpaque(icon));
+	}
+
+	private static void check(byte[] data, Set<String> accepted, String typeMessage, String sizeMessage) {
+		if (data.length == 0) {
+			throw invalid(typeMessage);
+		}
+		if (data.length > MAX_BYTES) {
+			throw invalid(sizeMessage);
+		}
+		checkFormatAndPixels(data, accepted, typeMessage);
+	}
+
+	private static void checkFormatAndPixels(byte[] data, Set<String> accepted, String typeMessage) {
 		try (ImageInputStream in = ImageIO.createImageInputStream(new ByteArrayInputStream(data))) {
 			Iterator<ImageReader> readers = ImageIO.getImageReaders(in);
 			if (!readers.hasNext()) {
-				throw invalid(MESSAGE_TYPE);
+				throw invalid(typeMessage);
 			}
 			ImageReader reader = readers.next();
 			try {
-				if (!ACCEPTED.contains(reader.getFormatName().toLowerCase(Locale.ROOT))) {
-					throw invalid(MESSAGE_TYPE);
+				if (!accepted.contains(reader.getFormatName().toLowerCase(Locale.ROOT))) {
+					throw invalid(typeMessage);
 				}
 				reader.setInput(in, true, true);
 				// 縦横は、画像の先頭の情報だけを読んで分かる（まだ展開しない）
@@ -94,19 +124,19 @@ public class ImageProcessor {
 				throw validation;
 			}
 			// 壊れた画像など
-			throw invalid(MESSAGE_TYPE);
+			throw invalid(typeMessage);
 		}
 	}
 
 	// 展開して、写真の向きを直す（Thumbnailator が Exif の Orientation を読んで回す）。
 	// 作り直す絵は、いつも ARGB（色と透明さを全部持てる形）にする。GIF や色の少ない PNG は「色の表」を持つ形で読まれ、
 	// その形のまま作り直すと色の表が白黒になって、色が変わってしまうため
-	private static BufferedImage decode(byte[] data) {
+	private static BufferedImage decode(byte[] data, String typeMessage) {
 		try {
 			return Thumbnails.of(new ByteArrayInputStream(data)).scale(1.0).useExifOrientation(true)
 					.imageType(BufferedImage.TYPE_INT_ARGB).asBufferedImage();
 		} catch (IOException | RuntimeException e) {
-			throw invalid(MESSAGE_TYPE);
+			throw invalid(typeMessage);
 		}
 	}
 
@@ -120,6 +150,10 @@ public class ImageProcessor {
 				throw new IllegalStateException("画像を縮小できませんでした", e);
 			}
 		}
+		return dropAlphaIfOpaque(resized);
+	}
+
+	private static BufferedImage dropAlphaIfOpaque(BufferedImage resized) {
 		if (hasTransparency(resized)) {
 			return resized;
 		}

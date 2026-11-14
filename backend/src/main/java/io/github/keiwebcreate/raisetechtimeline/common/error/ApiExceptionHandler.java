@@ -44,6 +44,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	private static final String MESSAGE_NOT_FOUND = "ページが見つかりません";
 	private static final String MESSAGE_INTERNAL = "通信に失敗しました。時間をおいて再度お試しください";
 	private static final String MESSAGE_IMAGE_SIZE = "画像は1枚5MBまでです";
+	private static final String MESSAGE_ICON_SIZE = "画像は5MBまでです";
 
 	private final AuthCookies authCookies;
 
@@ -77,6 +78,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(PostNotFoundException.class)
 	ResponseEntity<ProblemDetail> handlePostNotFound(PostNotFoundException e) {
 		return problem(HttpStatus.NOT_FOUND, "POST_NOT_FOUND", e.getMessage());
+	}
+
+	@ExceptionHandler(UserNotFoundException.class)
+	ResponseEntity<ProblemDetail> handleUserNotFound(UserNotFoundException e) {
+		return problem(HttpStatus.NOT_FOUND, "USER_NOT_FOUND", e.getMessage());
 	}
 
 	@ExceptionHandler(CommentNotFoundException.class)
@@ -138,7 +144,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity<Object> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex,
 			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
 		ProblemDetail body = problemDetail(HttpStatus.BAD_REQUEST, "VALIDATION_ERROR", MESSAGE_VALIDATION);
-		body.setProperty("errors", List.of(Map.of("field", "file", "message", MESSAGE_IMAGE_SIZE)));
+		// アイコンは1枚だけなので「1枚」を付けない（profile.md 5章）。getDescription は「uri=/api/...」の形
+		String message = request.getDescription(false).endsWith("/api/media/icons") ? MESSAGE_ICON_SIZE
+				: MESSAGE_IMAGE_SIZE;
+		body.setProperty("errors", List.of(Map.of("field", "file", "message", message)));
 		return ResponseEntity.badRequest().body(body);
 	}
 

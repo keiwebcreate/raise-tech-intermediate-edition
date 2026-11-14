@@ -8,6 +8,7 @@ import org.jspecify.annotations.Nullable;
  * 投稿1件と、投稿した人の名前（posts と users を JOIN した1行。docs/database-design.md 3.2）。
  * MyBatis が SQL の結果をこの record に入れる。API の返事には PostResponse に詰め替える。
  *
+ * @param authorIconImageKey 投稿した人のアイコンの S3 のキー。未設定なら null
  * @param editedAt 編集した日時。編集していなければ null
  * @param likeCount いいね数（docs/features/like.md 4.2）
  * @param liked 見ている人がいいねしているか
@@ -21,6 +22,7 @@ public record Post(
 		OffsetDateTime createdAt,
 		String authorUsername,
 		String authorDisplayName,
+		@Nullable String authorIconImageKey,
 		long likeCount,
 		boolean liked,
 		long commentCount) {

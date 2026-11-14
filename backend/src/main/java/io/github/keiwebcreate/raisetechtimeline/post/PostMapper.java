@@ -39,6 +39,14 @@ public interface PostMapper {
 	 *
 	 * @param viewerId 見ている人（「自分がいいねしたか」に使う）
 	 */
+	/**
+	 * その人の投稿。新しい順（プロフィールの投稿の一覧。docs/features/profile.md 3.1）。
+	 *
+	 * @param beforeId この投稿より古いものだけ（続きを読むとき）。null なら最新から
+	 */
+	List<Post> findByAuthor(@Param("authorId") long authorId, @Param("viewerId") long viewerId,
+			@Param("beforeId") @Nullable Long beforeId, @Param("limit") int limit);
+
 	Optional<Post> findById(@Param("id") long id, @Param("viewerId") long viewerId);
 
 	/** 1行足して、できた投稿の ID を返す */

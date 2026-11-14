@@ -20,6 +20,8 @@ import io.github.keiwebcreate.raisetechtimeline.auth.dto.LoginRequest;
 import io.github.keiwebcreate.raisetechtimeline.auth.dto.SignupRequest;
 import io.github.keiwebcreate.raisetechtimeline.auth.dto.UserResponse;
 import io.github.keiwebcreate.raisetechtimeline.common.error.RefreshTokenInvalidException;
+import io.github.keiwebcreate.raisetechtimeline.media.MediaService;
+import io.github.keiwebcreate.raisetechtimeline.user.User;
 import io.github.keiwebcreate.raisetechtimeline.user.UserMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -41,13 +43,15 @@ public class AuthController {
 	private final RefreshTokenService refreshTokenService;
 	private final AuthCookies authCookies;
 	private final UserMapper userMapper;
+	private final MediaService mediaService;
 
 	public AuthController(AuthService authService, RefreshTokenService refreshTokenService, AuthCookies authCookies,
-			UserMapper userMapper) {
+			UserMapper userMapper, MediaService mediaService) {
 		this.authService = authService;
 		this.refreshTokenService = refreshTokenService;
 		this.authCookies = authCookies;
 		this.userMapper = userMapper;
+		this.mediaService = mediaService;
 	}
 
 	@PostMapping("/signup")
@@ -80,14 +84,18 @@ public class AuthController {
 	ResponseEntity<UserResponse> me(@AuthenticationPrincipal LoginUser loginUser) {
 		// JWT は正しいが、ユーザーがもういない（退会など）ときは、ログインしていない扱い
 		return userMapper.findById(loginUser.id())
-				.map(user -> ResponseEntity.ok(UserResponse.from(user)))
+				.map(user -> ResponseEntity.ok(toResponse(user)))
 				.orElseThrow(() -> new RefreshTokenInvalidException("ユーザーがいません"));
 	}
 
 	private ResponseEntity<UserResponse> withTokens(HttpStatus status, AuthResult result) {
 		return ResponseEntity.status(status)
 				.headers(setCookies(authCookies.issue(result.accessToken(), result.refreshToken())))
-				.body(UserResponse.from(result.user()));
+				.body(toResponse(result.user()));
+	}
+
+	private UserResponse toResponse(User user) {
+		return UserResponse.from(user, mediaService.iconUrl(user.iconImageKey()));
 	}
 
 	private static HttpHeaders setCookies(List<ResponseCookie> cookies) {

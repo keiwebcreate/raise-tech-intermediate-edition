@@ -38,4 +38,32 @@
 		RETURNING id
 	</select>
 
+	<!--
+		プロフィール。フォロー数・フォロワー数は follows から数える（数の列は持たない。database-design.md 4章）。
+		フォロー数は一意制約 (follower_id, following_id) の索引、フォロワー数は ix_follows_following_id の索引で数える
+	-->
+	<sql id="profileColumns">
+		u.id, u.username, u.display_name, u.bio, u.icon_image_key, u.created_at,
+		(SELECT count(*) FROM follows f WHERE f.follower_id = u.id) AS following_count,
+		(SELECT count(*) FROM follows f WHERE f.following_id = u.id) AS follower_count
+	</sql>
+
+	<select id="findProfileByUsername" resultType="io.github.keiwebcreate.raisetechtimeline.user.Profile">
+		SELECT <include refid="profileColumns"/>
+		FROM users u
+		WHERE u.username = #{username}
+	</select>
+
+	<select id="findProfileById" resultType="io.github.keiwebcreate.raisetechtimeline.user.Profile">
+		SELECT <include refid="profileColumns"/>
+		FROM users u
+		WHERE u.id = #{id}
+	</select>
+
+	<update id="updateProfile">
+		UPDATE users
+		SET display_name = #{displayName}, bio = #{bio}, icon_image_key = #{iconImageKey}, updated_at = now()
+		WHERE id = #{id}
+	</update>
+
 </mapper>

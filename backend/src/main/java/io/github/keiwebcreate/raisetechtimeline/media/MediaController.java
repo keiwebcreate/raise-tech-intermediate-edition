@@ -23,6 +23,7 @@ import jakarta.validation.Valid;
  * | メソッド・URL             | 中身 |
  * |---|---|
  * | POST /api/media/images  | 画像を1枚送る（multipart の file）。確かめて WebP にし、一時置き場に置く |
+ * | POST /api/media/icons   | アイコンを1枚送る（multipart の file）。確かめて正方形の WebP にし、一時置き場に置く |
  * | POST /api/media/videos  | 動画を S3 へ直接送るための、期限付きの送り先 URL をもらう |
  */
 @RestController
@@ -39,6 +40,13 @@ public class MediaController {
 	ResponseEntity<ImageUploadResponse> uploadImage(@AuthenticationPrincipal LoginUser loginUser,
 			@RequestParam("file") MultipartFile file) {
 		return ResponseEntity.status(HttpStatus.CREATED).body(mediaService.uploadImage(loginUser.id(), file));
+	}
+
+	// アイコン（docs/features/profile.md 3.2）。正方形の 400×400 にして一時置き場に置く。保存はプロフィールの編集で
+	@PostMapping(path = "/icons", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	ResponseEntity<ImageUploadResponse> uploadIcon(@AuthenticationPrincipal LoginUser loginUser,
+			@RequestParam("file") MultipartFile file) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(mediaService.uploadIcon(loginUser.id(), file));
 	}
 
 	@PostMapping("/videos")

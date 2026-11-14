@@ -19,6 +19,9 @@ final class MediaKeys {
 	// ランダムな部分は UUID（36文字、小文字の16進数とハイフン）
 	private static final String RANDOM = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 	private static final Pattern TMP = Pattern.compile("tmp/(\\d+)/" + RANDOM + "\\.(webp|mp4)");
+	// アイコンの一時置き場は、投稿の画像と分ける（正方形にしていない投稿の画像を、アイコンに使えないように）
+	private static final Pattern TMP_ICON = Pattern.compile("tmp/(\\d+)/icons/" + RANDOM + "\\.webp");
+	private static final Pattern ICON = Pattern.compile("icons/" + RANDOM + "\\.webp");
 
 	private MediaKeys() {
 	}
@@ -37,6 +40,25 @@ final class MediaKeys {
 	static boolean isTmpKeyOf(String key, long userId) {
 		var matcher = TMP.matcher(key);
 		return matcher.matches() && matcher.group(1).equals(Long.toString(userId));
+	}
+
+	static String newTmpIconKey(long userId) {
+		return "tmp/" + userId + "/icons/" + UUID.randomUUID() + "." + MediaKind.IMAGE.extension();
+	}
+
+	static String newIconKey() {
+		return "icons/" + UUID.randomUUID() + "." + MediaKind.IMAGE.extension();
+	}
+
+	/** その利用者がアイコン用に一時置き場へ置いたもののキーか */
+	static boolean isTmpIconKeyOf(String key, long userId) {
+		var matcher = TMP_ICON.matcher(key);
+		return matcher.matches() && matcher.group(1).equals(Long.toString(userId));
+	}
+
+	/** 正式な場所のアイコンのキーの形か */
+	static boolean isIconKey(String key) {
+		return ICON.matcher(key).matches();
 	}
 
 }

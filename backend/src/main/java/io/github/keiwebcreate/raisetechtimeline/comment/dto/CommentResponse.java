@@ -32,16 +32,21 @@ public record CommentResponse(
 		long replyCount,
 		long threadReplyCount) {
 
-	/** 書いた人。メールアドレスは他人に見せないので入れない */
-	public record Author(long id, String username, String displayName) {
+	/**
+	 * 書いた人。メールアドレスは他人に見せないので入れない。
+	 *
+	 * @param iconUrl アイコンを見るための期限付きの URL。未設定なら null
+	 */
+	public record Author(long id, String username, String displayName, @Nullable String iconUrl) {
 	}
 
 	/** 返信先のコメントを書いた人 */
 	public record ReplyTo(String username) {
 	}
 
-	public static CommentResponse from(Comment comment, long viewerId) {
-		Author author = new Author(comment.userId(), comment.authorUsername(), comment.authorDisplayName());
+	public static CommentResponse from(Comment comment, long viewerId, @Nullable String iconUrl) {
+		Author author = new Author(comment.userId(), comment.authorUsername(), comment.authorDisplayName(),
+				iconUrl);
 		String replyToUsername = comment.replyToUsername();
 		ReplyTo replyTo = replyToUsername == null ? null : new ReplyTo(replyToUsername);
 		return new CommentResponse(comment.id(), comment.postId(), comment.parentCommentId(),
