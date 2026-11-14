@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.6 |
+| 版 | 0.7 |
 | 作成日 | 2026-11-08 |
 | 状態 | たたき台（ユーザーの確認待ち） |
 | データベース | PostgreSQL 18 |
@@ -71,6 +71,7 @@ erDiagram
     bigint post_id FK
     bigint user_id FK
     bigint parent_comment_id FK "返信先・NULLなら投稿への直接のコメント"
+    bigint root_comment_id FK "返信が並ぶ一番上のコメント・NULLなら自分が一番上"
     varchar content "1〜280文字"
     timestamptz created_at
   }
@@ -155,13 +156,16 @@ erDiagram
 | post_id | bigint | × | コメントした投稿（`posts.id`） |
 | user_id | bigint | × | コメントした人（`users.id`） |
 | parent_comment_id | bigint | ○ | 返信先のコメント（`comments.id`）。NULL なら投稿への直接のコメント |
+| root_comment_id | bigint | ○ | 返信が並ぶ一番上のコメント（`comments.id`）。NULL なら投稿への直接のコメント。返信の返信も、一番上のコメントの ID を持つ |
 | content | varchar(280) | × | 本文。1文字以上 |
 | created_at | timestamptz | × | コメントした日時 |
 
 - コメントは編集しないので `updated_at` は持たない
 - 返信も同じテーブルに入れ、`parent_comment_id` で返信先を指す（自分のテーブルを指すつながり）。返信の返信なら、返信先は「返信」の行になる
 - 返信先は**同じ投稿のコメント**であること（サーバーで確かめる）
-- 画面で1段にまとめて表示するため、各返信が「どの一番上のコメントの下に並ぶか」は、返信先をたどって求める（件数が増えて遅くなったら、一番上のコメントの ID を列に持つことを考える）
+- 画面で1段にまとめて表示するため、各返信は「どの一番上のコメントの下に並ぶか」を `root_comment_id` に持つ。返信先をたどらずに、1回の SQL で返信をまとめて読める（2026-11-08、ユーザーの決定）。返信するときに、返信先の `root_comment_id`（返信先が一番上ならその ID）を写す
+- `parent_comment_id` と `root_comment_id` は、両方あるか両方ないか（CHECK 制約）
+- 本文は投稿と同じく、空白・改行だけは不可（CHECK 制約）
 
 ### 3.3.1 `comment_likes`（コメントへのいいね）
 
@@ -227,12 +231,13 @@ erDiagram
 | posts | `created_at DESC, id DESC` | 「すべて」タブ |
 | posts | `user_id, created_at DESC, id DESC` | 「フォロー中」タブ・プロフィールの投稿 |
 | post_media | `(post_id, position)`（一意） | 投稿の画像・動画を並び順で出す |
-| comments | `post_id, created_at` | 投稿のコメント一覧・コメント数 |
-| comments | `parent_comment_id` | 返信の一覧・返信数 |
+| comments | `post_id, created_at, id`（返信を除いた部分索引） | 投稿のコメント一覧・コメント数 |
+| comments | `root_comment_id, created_at, id` | 返信の一覧・「返信を表示（N件）」の数 |
+| comments | `parent_comment_id` | 直接の返信の数・コメントを消したときに下の返信を探す |
 | comment_likes | `(comment_id, user_id)`（一意） | コメントのいいね数・自分がいいねしたか |
-| comment_likes | `user_id` | ユーザーを消したとき |
+| comment_likes | `comment_id, id DESC` | コメントにいいねした人の一覧（新しい順） |
 | likes | `(post_id, user_id)`（一意） | いいね数・自分がいいねしたか |
-| likes | `user_id` | ユーザーを消したとき |
+| likes | `post_id, id DESC` | いいねした人の一覧（新しい順） |
 | follows | `(follower_id, following_id)`（一意） | フォロー中か・フォロー数・「フォロー中」タブ |
 | follows | `following_id` | フォロワー数・フォロワーの一覧 |
 | refresh_tokens | `token_hash`（一意） | 更新・ログアウトのときにトークンを探す |
@@ -240,6 +245,7 @@ erDiagram
 | refresh_tokens | `expires_at` | 期限切れをまとめて消す（1日1回） |
 
 - ユーザー検索の部分一致（`LIKE '%言葉%'`）は、ふつうの索引では速くならない。ユーザーが増えたら、PostgreSQL の `pg_trgm`（部分一致を速くする仕組み）を足す。今は使わない
+- `likes`・`comment_likes`・`comments` の `user_id` だけの索引（ユーザーを消したときに、その人の行を探す）は作っていない。退会の機能は今回作らないため。作るときに足す
 - コメント数・いいね数・フォロー数は、別の列に数を持たず、毎回数える（数がずれる心配がなく、作りが簡単。今の規模なら十分速い）
 
 ---
@@ -249,7 +255,7 @@ erDiagram
 | 消すもの | 一緒に消えるもの |
 |---|---|
 | 投稿 | その投稿の画像・動画の行（`post_media`）・コメント・返信・いいね・コメントへのいいね（`ON DELETE CASCADE`）。S3 のファイルはアプリが消す |
-| コメント | その下の返信（返信の返信も）と、それらへのいいね（`parent_comment_id` の `ON DELETE CASCADE`） |
+| コメント | その下の返信（返信の返信も）と、それらへのいいね（`parent_comment_id`・`root_comment_id` の `ON DELETE CASCADE`） |
 | ユーザー（退会。今回は作らない） | その人の投稿・コメント・いいね・フォロー（する・される両方）・リフレッシュトークン |
 
 ---
@@ -287,11 +293,11 @@ erDiagram
 - 「編集済み」は `edited_at` 列で判定する
 - コメント数・いいね数・フォロー数は列に持たず、毎回数える
 - ユーザー検索を速くする仕組み（`pg_trgm`）は、今は入れない
-- 返信はコメントと同じテーブルに入れ、`parent_comment_id` で返信先を指す
+- 返信はコメントと同じテーブルに入れ、`parent_comment_id` で返信先を、`root_comment_id` で並ぶ一番上のコメントを指す
 - コメントへのいいねは、投稿のいいねと別のテーブル（`comment_likes`）にする
 - 投稿の画像・動画は `post_media` テーブルに分ける（`posts.image_key` はなくした）
 - リフレッシュトークンの `refresh_tokens` テーブルを足す（ハッシュだけ保存）
-- テーブルは機能を作るときに Flyway で足していく。今あるのは `users`（V1）・`refresh_tokens`（V2）・`posts`（V3）・`follows`（V4）・`post_media`（V5）・`likes`（V6。いいねした人の一覧のため `(post_id, id DESC)` の索引も作った）
+- テーブルは機能を作るときに Flyway で足していく。今あるのは `users`（V1）・`refresh_tokens`（V2）・`posts`（V3）・`follows`（V4）・`post_media`（V5）・`likes`（V6。いいねした人の一覧のため `(post_id, id DESC)` の索引も作った）・`comments`（V7）・`comment_likes`（V8）
 - `follows` は、フォローの画面より先に、投稿と一緒に作った（「フォロー中」タブの SQL を最終の形にするため）
 - `posts` の索引には `id DESC` も入れた（同じ時刻の投稿を ID の大きい順に並べ、続きの読み込みで抜けも重なりも出さないため）
 
@@ -305,3 +311,4 @@ erDiagram
 | 0.4 | 2026-11-08 | 投稿の実装に合わせて `posts`（V3）・`follows`（V4）を作った（8章）。`post_media` は画像・動画の機能のとき |
 | 0.5 | 2026-11-08 | 画像・動画の実装に合わせて `post_media`（V5）を作った（3.2.1 のとおり） |
 | 0.6 | 2026-11-08 | いいねの実装に合わせて `likes`（V6）を作った（3.4 のとおり。索引 `(post_id, id DESC)` を足した） |
+| 0.7 | 2026-11-14 | コメントの実装に合わせて `comments`（V7）・`comment_likes`（V8）を作った。`comments.root_comment_id` と CHECK 制約を足し、索引（4章）を実際のものに直した（作っていない `user_id` の索引を外し、退会の機能のときに足すと書いた） |

@@ -79,6 +79,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		return problem(HttpStatus.NOT_FOUND, "POST_NOT_FOUND", e.getMessage());
 	}
 
+	@ExceptionHandler(CommentNotFoundException.class)
+	ResponseEntity<ProblemDetail> handleCommentNotFound(CommentNotFoundException e) {
+		return problem(HttpStatus.NOT_FOUND, "COMMENT_NOT_FOUND", e.getMessage());
+	}
+
 	// 回数制限（要件 N-23）。何秒後に試せるかを Retry-After で返す
 	@ExceptionHandler(RateLimitedException.class)
 	ResponseEntity<ProblemDetail> handleRateLimited(RateLimitedException e) {

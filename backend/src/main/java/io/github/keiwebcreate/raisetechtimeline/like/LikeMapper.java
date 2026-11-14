@@ -30,4 +30,18 @@ public interface LikeMapper {
 	List<Liker> findLikers(@Param("postId") long postId, @Param("beforeId") @Nullable Long beforeId,
 			@Param("limit") int limit);
 
+	// ===== コメント・返信へのいいね（comment_likes。上の投稿へのいいねと同じ形） =====
+
+	boolean commentExists(@Param("commentId") long commentId);
+
+	int insertCommentLike(@Param("commentId") long commentId, @Param("userId") long userId);
+
+	int deleteCommentLike(@Param("commentId") long commentId, @Param("userId") long userId);
+
+	long countCommentLikes(@Param("commentId") long commentId);
+
+	/** @param beforeId このいいね（comment_likes.id）より前のものだけ。null なら最新から */
+	List<Liker> findCommentLikers(@Param("commentId") long commentId, @Param("beforeId") @Nullable Long beforeId,
+			@Param("limit") int limit);
+
 }
