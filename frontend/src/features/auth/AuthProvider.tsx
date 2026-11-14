@@ -79,5 +79,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
   }, [navigate])
 
-  return <AuthContext value={{ user, loggedIn, logout }}>{children}</AuthContext>
+  const updateUser = useCallback((change: Pick<UserResponse, 'displayName' | 'iconUrl'>) => {
+    setUser((prev) => (prev ? { ...prev, ...change } : prev))
+  }, [])
+
+  return <AuthContext value={{ user, loggedIn, logout, updateUser }}>{children}</AuthContext>
 }

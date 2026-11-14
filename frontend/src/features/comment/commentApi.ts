@@ -1,5 +1,6 @@
 // コメント・返信と、コメントへのいいねの API（docs/features/comment.md 8章・like.md 8章）
 import { api } from '../../api/client.ts'
+import type { UserSummary } from '../../api/types.ts'
 import type { LikersPage } from '../like/likeApi.ts'
 import type { LikeState } from '../like/likeToggler.ts'
 
@@ -12,7 +13,7 @@ export type Comment = {
   rootCommentId: number | null
   content: string
   createdAt: string
-  author: { id: number; username: string; displayName: string }
+  author: UserSummary
   // 返信先のコメントを書いた人。直接のコメントなら null
   replyTo: { username: string } | null
   // 自分のコメントか（「削除」を出すか）

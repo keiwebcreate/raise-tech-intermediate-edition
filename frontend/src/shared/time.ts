@@ -15,6 +15,12 @@ export function formatRelativeTime(iso: string, now: Date = new Date()): string 
   return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 }
 
+// 登録した月「2026年11月から利用しています」（profile.md 3.1）
+export function formatJoinedMonth(iso: string): string {
+  const date = new Date(iso)
+  return `${date.getFullYear()}年${date.getMonth() + 1}月から利用しています`
+}
+
 // 正確な日時「2026年11月8日 14:05」（マウスを乗せたとき・投稿の詳細）
 export function formatFullTime(iso: string): string {
   const date = new Date(iso)

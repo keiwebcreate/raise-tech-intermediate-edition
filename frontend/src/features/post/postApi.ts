@@ -1,5 +1,6 @@
 // 投稿とタイムラインの API（docs/features/post.md 8章・timeline.md 4.1）
 import { api } from '../../api/client.ts'
+import type { UserSummary } from '../../api/types.ts'
 
 // 投稿の画像・動画1つ
 export type PostMedia = {
@@ -16,7 +17,7 @@ export type Post = {
   createdAt: string
   // 編集した日時。編集していなければ null
   editedAt: string | null
-  author: { id: number; username: string; displayName: string }
+  author: UserSummary
   // 自分の投稿か（「…」メニューを出すか）
   mine: boolean
   // 画像・動画（並び順）。なければ空

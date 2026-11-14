@@ -10,11 +10,11 @@ import Typography from '@mui/material/Typography'
 import { useCallback, useState, type MouseEvent } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router'
 import { formatFullTime, formatRelativeTime } from '../../shared/time.ts'
-import { UserAvatar } from '../../shared/UserAvatar.tsx'
 import { COMMENT_INPUT_ID } from '../comment/commentState.ts'
 import { getPostLikers, setPostLike } from '../like/likeApi.ts'
 import { LikeButton } from '../like/LikeButton.tsx'
 import { LikersDialog } from '../like/LikersDialog.tsx'
+import { AvatarLink, UserNameLink } from '../profile/UserLinks.tsx'
 import { usePostActions } from './PostActionsContext.ts'
 import type { Post } from './postApi.ts'
 import { PostMediaGrid } from './PostMediaGrid.tsx'
@@ -65,15 +65,10 @@ export function PostCard({ post, variant = 'list' }: Props) {
         '&:hover': variant === 'list' ? { bgcolor: 'action.hover' } : undefined,
       }}
     >
-      <UserAvatar displayName={post.author.displayName} />
+      <AvatarLink user={post.author} />
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minHeight: 32 }}>
-          <Typography component="span" sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>
-            {post.author.displayName}
-          </Typography>
-          <Typography component="span" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
-            @{post.author.username}
-          </Typography>
+          <UserNameLink user={post.author} />
           {variant === 'list' && (
             <>
               <Typography component="span" color="text.secondary" aria-hidden>

@@ -4,10 +4,10 @@ import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
 import { useCallback, useState, type ReactNode } from 'react'
 import { formatFullTime, formatRelativeTime } from '../../shared/time.ts'
-import { UserAvatar } from '../../shared/UserAvatar.tsx'
 import { LikeButton } from '../like/LikeButton.tsx'
 import { LikersDialog } from '../like/LikersDialog.tsx'
 import type { LikeState } from '../like/likeToggler.ts'
+import { AvatarLink, UserNameLink } from '../profile/UserLinks.tsx'
 import { getCommentLikers, setCommentLike, type Comment } from './commentApi.ts'
 import { showsReplyTo } from './commentState.ts'
 
@@ -31,15 +31,10 @@ export function CommentItem({ comment, onReply, onDelete, onLikeSettled, childre
 
   return (
     <Box sx={{ display: 'flex', gap: 1.5, py: 1.25 }}>
-      <UserAvatar displayName={comment.author.displayName} size={36} />
+      <AvatarLink user={comment.author} size={36} />
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap', minHeight: 32 }}>
-          <Typography component="span" sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>
-            {comment.author.displayName}
-          </Typography>
-          <Typography component="span" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
-            @{comment.author.username}
-          </Typography>
+          <UserNameLink user={comment.author} />
           <Typography component="span" color="text.secondary" aria-hidden>
             ·
           </Typography>

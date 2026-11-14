@@ -16,6 +16,7 @@ import { usePostActions, usePostEvents, type PostEvent } from '../post/PostActio
 import * as postApi from '../post/postApi.ts'
 import { PostCard } from '../post/PostCard.tsx'
 import { PostComposer } from '../post/PostComposer.tsx'
+import { appendOlder, applyPostEvent, mergeNewer } from '../post/postEvents.ts'
 import { useNewPostCount } from './useNewPostCount.ts'
 
 const TAB_STORAGE_KEY = 'rt-tab'
@@ -31,12 +32,6 @@ type ListState = {
 
 function initialTab(): postApi.Tab {
   return readStorage(TAB_STORAGE_KEY) === 'following' ? 'following' : 'all'
-}
-
-// 同じ投稿を2回出さない（新しい投稿を足したときなど）
-function mergeNewer(newer: postApi.Post[], current: postApi.Post[]): postApi.Post[] {
-  const ids = new Set(newer.map((p) => p.id))
-  return [...newer, ...current.filter((p) => !ids.has(p.id))]
 }
 
 // S-03 タイムライン（docs/features/timeline.md）
@@ -95,10 +90,7 @@ export function TimelinePage() {
     setMoreFailed(false)
     try {
       const page = await postApi.getTimeline(tab, { before: last.id })
-      updatePosts((prev) => {
-        const ids = new Set(prev.posts.map((p) => p.id))
-        return { posts: [...prev.posts, ...page.posts.filter((p) => !ids.has(p.id))], hasMore: page.hasMore }
-      })
+      updatePosts((prev) => ({ posts: appendOlder(prev.posts, page.posts), hasMore: page.hasMore }))
     } catch {
       setMoreFailed(true)
     } finally {
@@ -150,25 +142,7 @@ export function TimelinePage() {
   // 投稿・編集・削除を一覧に反映する
   const handleEvent = useCallback(
     (event: PostEvent) => {
-      updatePosts((prev) => {
-        if (event.type === 'created') return { posts: mergeNewer([event.post], prev.posts) }
-        if (event.type === 'updated') {
-          return { posts: prev.posts.map((p) => (p.id === event.post.id ? event.post : p)) }
-        }
-        if (event.type === 'liked') {
-          const { liked, likeCount } = event
-          return { posts: prev.posts.map((p) => (p.id === event.id ? { ...p, liked, likeCount } : p)) }
-        }
-        if (event.type === 'commentCount') {
-          const { delta } = event
-          return {
-            posts: prev.posts.map((p) =>
-              p.id === event.id ? { ...p, commentCount: Math.max(0, p.commentCount + delta) } : p,
-            ),
-          }
-        }
-        return { posts: prev.posts.filter((p) => p.id !== event.id) }
-      })
+      updatePosts((prev) => ({ posts: applyPostEvent(prev.posts, event) }))
     },
     [updatePosts],
   )
@@ -219,7 +193,7 @@ export function TimelinePage() {
       <Box
         sx={{ display: { xs: 'none', sm: 'flex' }, gap: 1.5, px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}
       >
-        {user && <UserAvatar displayName={user.displayName} />}
+        {user && <UserAvatar displayName={user.displayName} iconUrl={user.iconUrl} />}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <PostComposer
             inputId="timeline-composer"

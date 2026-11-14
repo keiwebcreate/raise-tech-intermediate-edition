@@ -3,6 +3,8 @@ import EditIcon from '@mui/icons-material/Edit'
 import HomeIcon from '@mui/icons-material/Home'
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
 import LogoutIcon from '@mui/icons-material/Logout'
+import PersonIcon from '@mui/icons-material/Person'
+import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import ButtonBase from '@mui/material/ButtonBase'
@@ -16,19 +18,23 @@ import { useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { useAuth } from '../features/auth/AuthContext.ts'
 import { usePostActions } from '../features/post/PostActionsContext.ts'
+import { profilePath, sameUsername } from '../features/profile/profileApi.ts'
 import { UserAvatar } from '../shared/UserAvatar.tsx'
 
 // ログインした後の画面の共通の並び（screen-design.md 3.1・3.2）
 // - パソコン（md：1024px 以上）：左にメニュー、真ん中にメイン（600px）
 // - タブレット（sm：768〜1023px）：左にアイコンだけのメニュー
 // - スマホ（767px 以下）：下にメニュー、右下に丸い「投稿する」
-// メニューは、今ある行き先（ホーム・投稿する・自分 → ログアウト）だけ。検索・プロフィールはその機能のときに足す
+// メニューは、今ある行き先（ホーム・プロフィール・投稿する・自分 → ログアウト）だけ。検索はその機能のときに足す
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   const { openCreate } = usePostActions()
   const { pathname } = useLocation()
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null)
   const isHome = pathname === '/'
+  // 自分のプロフィール（/users/自分）を見ているか。ユーザー名は大文字・小文字を区別しない
+  const myProfile = user ? profilePath(user.username) : '/'
+  const isMyProfile = user ? sameUsername(decodeURIComponent(pathname), `/users/${user.username}`) : false
 
   const accountMenu = (
     <Menu
@@ -113,6 +119,26 @@ export function AppLayout({ children }: { children: ReactNode }) {
         </Button>
 
         <Button
+          component={NavLink}
+          to={myProfile}
+          aria-current={isMyProfile ? 'page' : undefined}
+          startIcon={isMyProfile ? <PersonIcon /> : <PersonOutlineIcon />}
+          sx={{
+            justifyContent: { sm: 'center', md: 'flex-start' },
+            color: 'text.primary',
+            fontSize: 18,
+            fontWeight: isMyProfile ? 700 : 400,
+            px: { sm: 1.5, md: 2 },
+            minWidth: 0,
+            '& .MuiButton-startIcon': { mr: { sm: 0, md: 1.5 }, ml: 0 },
+          }}
+        >
+          <Box component="span" sx={{ display: { sm: 'none', md: 'inline' } }}>
+            プロフィール
+          </Box>
+        </Button>
+
+        <Button
           variant="contained"
           size="large"
           onClick={openCreate}
@@ -150,7 +176,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
               '&:hover': { bgcolor: 'action.hover' },
             }}
           >
-            <UserAvatar displayName={user.displayName} />
+            <UserAvatar displayName={user.displayName} iconUrl={user.iconUrl} />
             <Box sx={{ display: { sm: 'none', md: 'block' }, textAlign: 'left', minWidth: 0 }}>
               <Typography sx={{ fontWeight: 700 }} noWrap>
                 {user.displayName}
@@ -205,13 +231,21 @@ export function AppLayout({ children }: { children: ReactNode }) {
         <IconButton component={NavLink} to="/" aria-label="ホーム" aria-current={isHome ? 'page' : undefined}>
           {isHome ? <HomeIcon color="primary" /> : <HomeOutlinedIcon />}
         </IconButton>
+        <IconButton
+          component={NavLink}
+          to={myProfile}
+          aria-label="プロフィール"
+          aria-current={isMyProfile ? 'page' : undefined}
+        >
+          {isMyProfile ? <PersonIcon color="primary" /> : <PersonOutlineIcon />}
+        </IconButton>
         {user && (
           <IconButton
             onClick={(e) => setAccountAnchor(e.currentTarget)}
             aria-label="アカウントのメニュー"
             aria-haspopup="menu"
           >
-            <UserAvatar displayName={user.displayName} size={28} />
+            <UserAvatar displayName={user.displayName} iconUrl={user.iconUrl} size={28} />
           </IconButton>
         )}
       </Box>

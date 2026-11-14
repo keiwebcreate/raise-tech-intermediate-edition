@@ -223,7 +223,7 @@ export function CommentSection({ postId, onCountChange }: Props) {
   return (
     <Box component="section" aria-label="コメント" sx={{ borderTop: 1, borderColor: 'divider' }}>
       <Box sx={{ display: 'flex', gap: 1.5, px: 2, py: 1.5, borderBottom: 1, borderColor: 'divider' }}>
-        {user && <UserAvatar displayName={user.displayName} size={36} />}
+        {user && <UserAvatar displayName={user.displayName} iconUrl={user.iconUrl} size={36} />}
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <CommentComposer
             inputId={COMMENT_INPUT_ID}
