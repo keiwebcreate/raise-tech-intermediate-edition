@@ -136,7 +136,8 @@ function ProfileHeader({ profile }: { profile: profileApi.Profile }) {
           </Button>
         )}
       </Box>
-      <Typography component="h2" variant="h6" sx={{ fontWeight: 700, mt: 1.5, overflowWrap: 'anywhere' }}>
+      {/* 見出し（h1）は上の帯の表示名。ここはふつうの文字にして、読み上げで名前の見出しが2回続かないようにする */}
+      <Typography component="p" variant="h6" sx={{ fontWeight: 700, mt: 1.5, overflowWrap: 'anywhere' }}>
         {profile.displayName}
       </Typography>
       <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>

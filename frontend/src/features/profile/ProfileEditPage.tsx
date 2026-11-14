@@ -102,7 +102,13 @@ function EditHeader({ onBack, saveButton }: { onBack?: () => void; saveButton?: 
       <IconButton aria-label="戻る" onClick={onBack ?? (() => navigate(-1))}>
         <ArrowBackIcon />
       </IconButton>
-      <Typography component="h1" variant="h6" noWrap sx={{ fontWeight: 700, flex: 1, minWidth: 0 }}>
+      {/* 320px でも「保存する」と並んで省略されないよう、スマホでは文字を少し小さくする */}
+      <Typography
+        component="h1"
+        variant="h6"
+        noWrap
+        sx={{ fontWeight: 700, flex: 1, minWidth: 0, fontSize: { xs: '1rem', sm: '1.25rem' } }}
+      >
         プロフィールを編集
       </Typography>
       {saveButton}
