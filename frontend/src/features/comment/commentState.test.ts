@@ -20,7 +20,7 @@ function comment(id: number, parent: number | null = null, root: number | null =
     rootCommentId: root,
     content: `コメント${id}`,
     createdAt: '2026-11-14T00:00:00Z',
-    author: { id: 1, username: 'taro', displayName: '太郎' },
+    author: { id: 1, username: 'taro', displayName: '太郎', iconUrl: null },
     replyTo: parent === null ? null : { username: 'hanako' },
     mine: true,
     likeCount: 0,

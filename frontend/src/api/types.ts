@@ -6,6 +6,17 @@ export type UserResponse = {
   email: string
   username: string
   displayName: string
+  // アイコンを見るための期限付きの URL（期限1時間）。未設定なら null
+  iconUrl: string | null
+}
+
+// 投稿・コメント・いいねした人などに出てくるユーザー（profile.md 8章）
+export type UserSummary = {
+  id: number
+  username: string
+  displayName: string
+  // アイコンを見るための期限付きの URL。未設定なら null（頭文字の丸を出す）
+  iconUrl: string | null
 }
 
 // 入力の誤り（項目ごと）

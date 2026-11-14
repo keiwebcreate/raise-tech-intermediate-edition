@@ -15,4 +15,7 @@ export const MESSAGES = {
   // コメント（docs/features/comment.md 5章・screen-design.md 3.4）
   commentFailed: 'コメントに失敗しました。時間をおいて再度お試しください',
   commentDeleted: 'コメントを削除しました',
+  // プロフィール（docs/features/profile.md 5章・screen-design.md 3.4）
+  userNotFound: 'このアカウントは存在しません',
+  profileUpdated: 'プロフィールを更新しました',
 } as const

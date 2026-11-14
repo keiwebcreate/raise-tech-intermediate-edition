@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatFullTime, formatRelativeTime } from './time.ts'
+import { formatFullTime, formatJoinedMonth, formatRelativeTime } from './time.ts'
 
 // 日本時間の 2026年11月8日 14:05 を「今」とする
 const now = new Date(2026, 10, 8, 14, 5, 0)
@@ -20,5 +20,12 @@ describe('formatRelativeTime', () => {
 describe('formatFullTime', () => {
   it('「2026年11月8日 09:05」の形（時・分は2けた）', () => {
     expect(formatFullTime(new Date(2026, 10, 8, 9, 5).toISOString())).toBe('2026年11月8日 09:05')
+  })
+})
+
+describe('formatJoinedMonth', () => {
+  it('登録した年と月を「◯年◯月から利用しています」にする', () => {
+    expect(formatJoinedMonth(new Date(2026, 10, 8, 14, 5).toISOString())).toBe('2026年11月から利用しています')
+    expect(formatJoinedMonth(new Date(2025, 0, 31, 23, 59).toISOString())).toBe('2025年1月から利用しています')
   })
 })

@@ -11,7 +11,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { useTheme } from '@mui/material/styles'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MESSAGES } from '../../shared/messages.ts'
-import { UserAvatar } from '../../shared/UserAvatar.tsx'
+import { AvatarLink, UserNameLink } from '../profile/UserLinks.tsx'
 import type { Liker, LikersPage } from './likeApi.ts'
 
 type Props = {
@@ -27,7 +27,7 @@ type State = {
 }
 
 // いいねしたユーザー（M-02、like.md 4.3）。新しくいいねした順に20件ずつ、下までスクロールで続きを読む。
-// フォローボタン・自己紹介・プロフィールへのリンクは、フォロー・プロフィールの機能のときに足す
+// アイコン・名前を押すとプロフィールへ。フォローボタン・自己紹介は、フォローの機能のときに足す
 export function LikersDialog({ load, onClose }: Props) {
   const theme = useTheme()
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'))
@@ -100,13 +100,9 @@ export function LikersDialog({ load, onClose }: Props) {
         <Box component="ul" sx={{ listStyle: 'none', m: 0, p: 0 }}>
           {state.users.map((user) => (
             <Box component="li" key={user.id} sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 1.25 }}>
-              <UserAvatar displayName={user.displayName} />
-              <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{user.displayName}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
-                  @{user.username}
-                </Typography>
-              </Box>
+              {/* 押すとプロフィールへ。同じ人のプロフィールの上で開いていても閉じるように、押したら閉じる */}
+              <AvatarLink user={user} onClick={onClose} />
+              <UserNameLink user={user} onClick={onClose} stacked />
             </Box>
           ))}
         </Box>

@@ -9,6 +9,8 @@ type AuthContextValue = {
   loggedIn: (user: UserResponse, next?: string) => void
   // ログアウトして、ログイン画面へ移る
   logout: () => Promise<void>
+  // プロフィールを編集したときに、本人の表示名・アイコンを直す（左のメニューなどをそろえる）
+  updateUser: (change: Pick<UserResponse, 'displayName' | 'iconUrl'>) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
