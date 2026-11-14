@@ -131,6 +131,7 @@ export function PostCard({ post, variant = 'list' }: Props) {
         <PostMediaGrid media={post.media} />
         <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, ml: -1 }}>
           <LikeButton
+            key={postId}
             liked={post.liked}
             likeCount={post.likeCount}
             send={sendLike}

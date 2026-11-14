@@ -23,7 +23,9 @@ type Props = {
 export function LikeButton({ liked, likeCount, send, onSettled, onCountClick }: Props) {
   const notify = useNotify()
   const [shown, setShown] = useState<LikeState>({ liked, likeCount })
-  // 送り方（連打のときの扱い）は likeToggler.ts。部品を作ったときに1回だけ作る
+  // 送り方（連打のときの扱い）は likeToggler.ts。部品を作ったときに1回だけ作る。
+  // そのため send・onSettled は最初に受け取ったものをずっと使う。いいねする相手（投稿・コメント）が変わるときは、
+  // 使う側で key を変えて部品ごと作り直す
   const [toggler] = useState(() =>
     createLikeToggler({ liked, likeCount }, send, {
       onSettled: (state) => {
@@ -68,6 +70,11 @@ export function LikeButton({ liked, likeCount, send, onSettled, onCountClick }: 
             borderRadius: 1,
             fontSize: '0.875rem',
             '&:hover': { textDecoration: 'underline' },
+            // ButtonBase はブラウザのフォーカスの枠を消すので、キーボードで選んだときの印を自分で付ける
+            '&.Mui-focusVisible': {
+              outline: (theme) => `2px solid ${theme.palette.primary.main}`,
+              outlineOffset: 1,
+            },
           }}
         >
           {shown.likeCount}
