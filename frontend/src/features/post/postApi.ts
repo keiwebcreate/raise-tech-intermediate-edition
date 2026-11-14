@@ -24,6 +24,8 @@ export type Post = {
   // いいね数と、自分がいいねしているか
   likeCount: number
   liked: boolean
+  // コメント数（投稿に直接付いたものだけ。返信は数えない。comment.md 4.3）
+  commentCount: number
 }
 
 export type Tab = 'all' | 'following'

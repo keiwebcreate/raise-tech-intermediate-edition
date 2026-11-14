@@ -159,6 +159,14 @@ export function TimelinePage() {
           const { liked, likeCount } = event
           return { posts: prev.posts.map((p) => (p.id === event.id ? { ...p, liked, likeCount } : p)) }
         }
+        if (event.type === 'commentCount') {
+          const { delta } = event
+          return {
+            posts: prev.posts.map((p) =>
+              p.id === event.id ? { ...p, commentCount: Math.max(0, p.commentCount + delta) } : p,
+            ),
+          }
+        }
         return { posts: prev.posts.filter((p) => p.id !== event.id) }
       })
     },

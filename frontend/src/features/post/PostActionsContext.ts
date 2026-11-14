@@ -9,6 +9,8 @@ export type PostEvent =
   | { type: 'updated'; post: Post }
   | { type: 'deleted'; id: number }
   | { type: 'liked'; id: number; liked: boolean; likeCount: number }
+  // commentCount：投稿への直接のコメントが増えた（delta = 1）・減った（delta = -1）
+  | { type: 'commentCount'; id: number; delta: number }
 
 type PostActionsValue = {
   // 投稿のモーダル（M-01）を開く
