@@ -171,13 +171,27 @@ export function CommentSection({ postId, onCountChange }: Props) {
     }
   }
 
+  // 削除の通信を待っている間に、いいねの返事や「さらに表示」の続きが届いていることがある。
+  // 古い state に上書きしないように、最新の state（prev）から消す
   function removeFromScreen(id: number) {
-    if (!state) return
-    const result = removeComment(state, id)
-    setState(result.state)
-    if (result.removedTop) onCountChange(-1)
+    if (state?.top.some((c) => c.id === id)) onCountChange(-1)
+    setState((prev) => (prev ? removeComment(prev, id).state : prev))
     // 消したコメント（か、その上）に返信していたら、入力欄も閉じる
-    if (replyingTo && !findComment(result.state, replyingTo.id)) startReply(null)
+    if (replyingTo && (replyingTo.id === id || isUnder(replyingTo, id))) startReply(null)
+  }
+
+  // reply が、消したコメント（id）の下に付いた返信か（一番上のコメントを消したときと、返信の返信を消したとき）
+  function isUnder(reply: Comment, id: number): boolean {
+    if (reply.rootCommentId === id) return true
+    const list = reply.rootCommentId === null ? undefined : state?.replies[reply.rootCommentId]
+    if (!list) return false
+    // 返信先を上へたどる
+    let parentId = reply.parentCommentId
+    while (parentId !== null) {
+      if (parentId === id) return true
+      parentId = list.find((c) => c.id === parentId)?.parentCommentId ?? null
+    }
+    return false
   }
 
   function handleLikeSettled(id: number, like: { liked: boolean; likeCount: number }) {
@@ -321,10 +335,6 @@ export function CommentSection({ postId, onCountChange }: Props) {
       />
     </Box>
   )
-}
-
-function findComment(state: CommentsState, id: number): Comment | undefined {
-  return [...state.top, ...Object.values(state.replies).flat()].find((c) => c.id === id)
 }
 
 function withoutKey<T>(record: Record<number, T>, key: number): Record<number, T> {
