@@ -60,7 +60,7 @@ export function LikeButton({ liked, likeCount, send, onSettled, onCountClick }: 
       </IconButton>
       {shown.likeCount > 0 && (
         <ButtonBase
-          aria-label={`いいねしたユーザー（${shown.likeCount}人）`}
+          aria-label={`いいねしたユーザー ${shown.likeCount} 人`}
           onClick={onCountClick}
           // 押せる範囲を 32px 以上にする（指で押しやすく。Lighthouse の目安は 24px 以上）
           sx={{

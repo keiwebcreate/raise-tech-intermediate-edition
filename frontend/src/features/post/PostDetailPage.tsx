@@ -9,15 +9,17 @@ import { useCallback, useEffect, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router'
 import { ApiError } from '../../api/client.ts'
 import { MESSAGES } from '../../shared/messages.ts'
-import { usePostEvents, type PostEvent } from './PostActionsContext.ts'
+import { CommentSection } from '../comment/CommentSection.tsx'
+import { usePostActions, usePostEvents, type PostEvent } from './PostActionsContext.ts'
 import * as postApi from './postApi.ts'
 import { PostCard } from './PostCard.tsx'
 
 type State =
   { status: 'loading' } | { status: 'ready'; post: postApi.Post } | { status: 'notFound' } | { status: 'error' }
 
-// S-04 投稿の詳細（/posts/:id）。コメントは、コメントの機能を作るときに足す
+// S-04 投稿の詳細（/posts/:id）。投稿の下にコメント欄
 export function PostDetailPage() {
+  const { emit } = usePostActions()
   const { id } = useParams()
   const postId = Number(id)
   const navigate = useNavigate()
@@ -65,6 +67,20 @@ export function PostDetailPage() {
             : prev,
         )
       }
+      if (event.type === 'commentCount' && event.id === postId) {
+        const { delta } = event
+        setLoaded((prev) =>
+          prev && prev.state.status === 'ready'
+            ? {
+                ...prev,
+                state: {
+                  ...prev.state,
+                  post: { ...prev.state.post, commentCount: Math.max(0, prev.state.post.commentCount + delta) },
+                },
+              }
+            : prev,
+        )
+      }
       if (event.type === 'deleted' && event.id === postId) navigate('/', { replace: true })
     },
     [postId, requestKey, navigate],
@@ -108,7 +124,17 @@ export function PostDetailPage() {
           <Skeleton variant="text" width="80%" />
         </Box>
       )}
-      {state.status === 'ready' && <PostCard post={state.post} variant="detail" />}
+      {state.status === 'ready' && (
+        <>
+          <PostCard post={state.post} variant="detail" />
+          {/* key：別の投稿に移ったら、コメント欄を作り直す */}
+          <CommentSection
+            key={postId}
+            postId={postId}
+            onCountChange={(delta) => emit({ type: 'commentCount', id: postId, delta })}
+          />
+        </>
+      )}
       {state.status === 'notFound' && (
         <Typography sx={{ p: 4, textAlign: 'center' }} color="text.secondary">
           {MESSAGES.postNotFound}

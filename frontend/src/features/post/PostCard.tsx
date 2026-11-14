@@ -1,5 +1,7 @@
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutlineOutlined'
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz'
 import Box from '@mui/material/Box'
+import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Link from '@mui/material/Link'
 import Menu from '@mui/material/Menu'
@@ -9,12 +11,16 @@ import { useCallback, useState, type MouseEvent } from 'react'
 import { Link as RouterLink, useNavigate } from 'react-router'
 import { formatFullTime, formatRelativeTime } from '../../shared/time.ts'
 import { UserAvatar } from '../../shared/UserAvatar.tsx'
+import { COMMENT_INPUT_ID } from '../comment/commentState.ts'
 import { getPostLikers, setPostLike } from '../like/likeApi.ts'
 import { LikeButton } from '../like/LikeButton.tsx'
 import { LikersDialog } from '../like/LikersDialog.tsx'
 import { usePostActions } from './PostActionsContext.ts'
 import type { Post } from './postApi.ts'
 import { PostMediaGrid } from './PostMediaGrid.tsx'
+
+// 💬 コメント数のボタン。押せる範囲は 32px 以上（いいねの数と同じ）
+const commentButtonSx = { color: 'text.secondary', minWidth: 32, minHeight: 32, px: 1 } as const
 
 type Props = {
   post: Post
@@ -23,7 +29,7 @@ type Props = {
 }
 
 // 投稿1件（timeline.md 3.1・screen-design.md S-03・S-04）。
-// コメント数は、コメントの機能を作るときに足す
+// 本文・画像の下に 💬 コメント数と ♡ いいね
 export function PostCard({ post, variant = 'list' }: Props) {
   const navigate = useNavigate()
   const { openEdit, requestDelete, emit } = usePostActions()
@@ -129,7 +135,32 @@ export function PostCard({ post, variant = 'list' }: Props) {
           {post.content}
         </Typography>
         <PostMediaGrid media={post.media} />
-        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5, ml: -1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5, ml: -1 }}>
+          {/* 💬 コメント数（0 のときは数を出さない）。一覧では詳細へ移り、詳細ではコメントの入力欄へ */}
+          {variant === 'list' ? (
+            <Button
+              component={RouterLink}
+              to={href}
+              size="small"
+              color="inherit"
+              startIcon={<ChatBubbleOutlineIcon fontSize="small" />}
+              aria-label={`コメント ${post.commentCount} 件`}
+              sx={commentButtonSx}
+            >
+              {post.commentCount > 0 && post.commentCount}
+            </Button>
+          ) : (
+            <Button
+              size="small"
+              color="inherit"
+              startIcon={<ChatBubbleOutlineIcon fontSize="small" />}
+              aria-label={`コメントする ${post.commentCount} 件`}
+              onClick={() => document.getElementById(COMMENT_INPUT_ID)?.focus()}
+              sx={commentButtonSx}
+            >
+              {post.commentCount > 0 && post.commentCount}
+            </Button>
+          )}
           <LikeButton
             key={postId}
             liked={post.liked}

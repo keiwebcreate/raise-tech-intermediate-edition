@@ -12,4 +12,7 @@ export const MESSAGES = {
   loadFailed: '読み込みに失敗しました',
   // いいね（docs/features/like.md 5章）
   likeFailed: 'いいねに失敗しました',
+  // コメント（docs/features/comment.md 5章・screen-design.md 3.4）
+  commentFailed: 'コメントに失敗しました。時間をおいて再度お試しください',
+  commentDeleted: 'コメントを削除しました',
 } as const
