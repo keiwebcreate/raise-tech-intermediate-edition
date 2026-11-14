@@ -10,6 +10,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @param parentCommentId 返信先のコメント。投稿への直接のコメントなら null
  * @param rootCommentId 返信が並ぶ一番上のコメント。投稿への直接のコメントなら null
+ * @param authorIconImageKey 書いた人のアイコンの S3 のキー。未設定なら null
  * @param replyToUsername 返信先のコメントを書いた人の @ユーザー名。直接のコメントなら null
  * @param likeCount いいね数
  * @param liked 見ている人がいいねしているか
@@ -26,6 +27,7 @@ public record Comment(
 		OffsetDateTime createdAt,
 		String authorUsername,
 		String authorDisplayName,
+		@Nullable String authorIconImageKey,
 		@Nullable String replyToUsername,
 		long likeCount,
 		boolean liked,

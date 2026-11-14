@@ -13,6 +13,7 @@ import io.github.keiwebcreate.raisetechtimeline.comment.dto.RepliesResponse;
 import io.github.keiwebcreate.raisetechtimeline.common.error.CommentNotFoundException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.PostNotFoundException;
 import io.github.keiwebcreate.raisetechtimeline.common.validation.ContentText;
+import io.github.keiwebcreate.raisetechtimeline.media.MediaService;
 
 /**
  * コメントと返信（docs/features/comment.md）。自分の投稿にも、他の人の投稿にもコメントできる。
@@ -28,9 +29,11 @@ public class CommentService {
 	private static final String MESSAGE_EMPTY = "コメントを入力してください";
 
 	private final CommentMapper commentMapper;
+	private final MediaService mediaService;
 
-	public CommentService(CommentMapper commentMapper) {
+	public CommentService(CommentMapper commentMapper, MediaService mediaService) {
 		this.commentMapper = commentMapper;
+		this.mediaService = mediaService;
 	}
 
 	/**
@@ -90,7 +93,7 @@ public class CommentService {
 			}
 			throw new CommentNotFoundException(CommentNotFoundException.MESSAGE_PARENT_DELETED);
 		}
-		return CommentResponse.from(commentMapper.findById(commentId, userId).orElseThrow(), userId);
+		return toResponse(commentMapper.findById(commentId, userId).orElseThrow(), userId);
 	}
 
 	/**
@@ -111,8 +114,13 @@ public class CommentService {
 		}
 	}
 
-	private static List<CommentResponse> toResponses(List<Comment> comments, long viewerId) {
-		return comments.stream().map(comment -> CommentResponse.from(comment, viewerId)).toList();
+	private List<CommentResponse> toResponses(List<Comment> comments, long viewerId) {
+		return comments.stream().map(comment -> toResponse(comment, viewerId)).toList();
+	}
+
+	// 書いた人のアイコンの URL は、DB を読まずに作れる（一覧でも SQL は増えない）
+	private CommentResponse toResponse(Comment comment, long viewerId) {
+		return CommentResponse.from(comment, viewerId, mediaService.iconUrl(comment.authorIconImageKey()));
 	}
 
 }

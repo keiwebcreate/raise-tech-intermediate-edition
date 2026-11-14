@@ -31,7 +31,7 @@
 
 	<!-- 新しくいいねした順（ID の大きい順）。索引 ix_likes_post_id_id を使う -->
 	<select id="findLikers" resultType="io.github.keiwebcreate.raisetechtimeline.like.Liker">
-		SELECT l.id AS like_id, u.id AS user_id, u.username, u.display_name
+		SELECT l.id AS like_id, u.id AS user_id, u.username, u.display_name, u.icon_image_key
 		FROM likes l
 		JOIN users u ON u.id = l.user_id
 		WHERE l.post_id = #{postId}
@@ -65,7 +65,7 @@
 
 	<!-- 新しくいいねした順（ID の大きい順）。索引 ix_comment_likes_comment_id_id を使う -->
 	<select id="findCommentLikers" resultType="io.github.keiwebcreate.raisetechtimeline.like.Liker">
-		SELECT l.id AS like_id, u.id AS user_id, u.username, u.display_name
+		SELECT l.id AS like_id, u.id AS user_id, u.username, u.display_name, u.icon_image_key
 		FROM comment_likes l
 		JOIN users u ON u.id = l.user_id
 		WHERE l.comment_id = #{commentId}

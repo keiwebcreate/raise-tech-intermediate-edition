@@ -13,7 +13,7 @@ import org.jspecify.annotations.Nullable;
 public record LikersResponse(List<User> users, @Nullable Long nextBefore) {
 
 	/** いいねした人。メールアドレスは他人に見せないので入れない。自己紹介・フォローの状態は、その機能のときに足す */
-	public record User(long id, String username, String displayName) {
+	public record User(long id, String username, String displayName, @Nullable String iconUrl) {
 	}
 
 }

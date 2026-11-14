@@ -10,10 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import io.github.keiwebcreate.raisetechtimeline.auth.dto.LoginRequest;
 import io.github.keiwebcreate.raisetechtimeline.auth.dto.SignupRequest;
 import io.github.keiwebcreate.raisetechtimeline.common.error.EmailDuplicatedException;
-import io.github.keiwebcreate.raisetechtimeline.common.error.FieldValidationException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.LoginFailedException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.RefreshTokenInvalidException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.UsernameDuplicatedException;
+import io.github.keiwebcreate.raisetechtimeline.user.ProfileText;
 import io.github.keiwebcreate.raisetechtimeline.user.User;
 import io.github.keiwebcreate.raisetechtimeline.user.UserMapper;
 
@@ -23,8 +23,6 @@ import io.github.keiwebcreate.raisetechtimeline.user.UserMapper;
  */
 @Service
 public class AuthService {
-
-	private static final int DISPLAY_NAME_MAX = 50;
 
 	private final UserMapper userMapper;
 	private final PasswordEncoder passwordEncoder;
@@ -54,11 +52,8 @@ public class AuthService {
 	public AuthResult signup(SignupRequest request) {
 		String email = request.email().trim().toLowerCase(Locale.ROOT);
 		String username = request.username().toLowerCase(Locale.ROOT);
-		String displayName = request.displayName().strip();
-		// 見た目の1文字を1文字と数える（絵文字も1文字。DB の varchar と同じ数え方）
-		if (displayName.codePointCount(0, displayName.length()) > DISPLAY_NAME_MAX) {
-			throw new FieldValidationException("displayName", "表示名は50文字以内で入力してください");
-		}
+		// 表示名の決まりはプロフィールの編集と同じ（ProfileText）
+		String displayName = ProfileText.displayName(request.displayName());
 		if (userMapper.existsByEmail(email)) {
 			throw new EmailDuplicatedException();
 		}

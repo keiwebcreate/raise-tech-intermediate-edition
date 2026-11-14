@@ -16,7 +16,7 @@
 	-->
 	<sql id="columns">
 		c.id, c.post_id, c.user_id, c.parent_comment_id, c.root_comment_id, c.content, c.created_at,
-		u.username AS author_username, u.display_name AS author_display_name,
+		u.username AS author_username, u.display_name AS author_display_name, u.icon_image_key AS author_icon_image_key,
 		pu.username AS reply_to_username,
 		(SELECT count(*) FROM comment_likes l WHERE l.comment_id = c.id) AS like_count,
 		EXISTS (SELECT 1 FROM comment_likes l WHERE l.comment_id = c.id AND l.user_id = #{viewerId}) AS liked,

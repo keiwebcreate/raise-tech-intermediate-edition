@@ -29,8 +29,12 @@ public record PostResponse(
 		boolean liked,
 		long commentCount) {
 
-	/** 投稿した人。メールアドレスは他人に見せないので入れない */
-	public record Author(long id, String username, String displayName) {
+	/**
+	 * 投稿した人。メールアドレスは他人に見せないので入れない。
+	 *
+	 * @param iconUrl アイコンを見るための期限付きの URL。未設定なら null（画面は頭文字の丸を出す）
+	 */
+	public record Author(long id, String username, String displayName, @Nullable String iconUrl) {
 	}
 
 	/**
@@ -43,8 +47,8 @@ public record PostResponse(
 	public record Media(String type, String key, String url) {
 	}
 
-	public static PostResponse from(Post post, long viewerId, List<Media> media) {
-		Author author = new Author(post.userId(), post.authorUsername(), post.authorDisplayName());
+	public static PostResponse from(Post post, long viewerId, List<Media> media, @Nullable String iconUrl) {
+		Author author = new Author(post.userId(), post.authorUsername(), post.authorDisplayName(), iconUrl);
 		return new PostResponse(post.id(), post.content(), post.createdAt(), post.editedAt(), author,
 				post.userId() == viewerId, media, post.likeCount(), post.liked(),
 				post.commentCount());

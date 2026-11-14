@@ -67,6 +67,18 @@ public class PostService {
 		return new TimelineResponse(toResponses(rows.stream().limit(PAGE_SIZE).toList(), viewerId), hasMore);
 	}
 
+	/**
+	 * その人の投稿の一覧（プロフィール。docs/features/profile.md 3.1）。返事の形はタイムラインと同じ。
+	 *
+	 * @param before この投稿より古いもの（続きを読むとき）
+	 */
+	@Transactional(readOnly = true)
+	public TimelineResponse postsByAuthor(long viewerId, long authorId, @Nullable Long before) {
+		List<Post> rows = postMapper.findByAuthor(authorId, viewerId, before, PAGE_SIZE + 1);
+		boolean hasMore = rows.size() > PAGE_SIZE;
+		return new TimelineResponse(toResponses(rows.stream().limit(PAGE_SIZE).toList(), viewerId), hasMore);
+	}
+
 	@Transactional(readOnly = true)
 	public NewPostCountResponse countNewer(long viewerId, TimelineTab tab, @Nullable Long after) {
 		return new NewPostCountResponse(
@@ -191,7 +203,7 @@ public class PostService {
 		}
 	}
 
-	/** 投稿に画像・動画（見るための期限付き URL）を付けて返事にする。画像・動画は1回の SQL でまとめて読む */
+	/** 投稿に画像・動画と投稿した人のアイコン（見るための期限付き URL）を付けて返事にする。URL は DB を読まずに作れる。画像・動画は1回の SQL でまとめて読む */
 	private List<PostResponse> toResponses(List<Post> posts, long viewerId) {
 		if (posts.isEmpty()) {
 			return List.of();
@@ -203,7 +215,8 @@ public class PostService {
 						Collectors.toList())));
 		return posts.stream()
 				.map(post -> PostResponse.from(post, viewerId,
-						List.copyOf(mediaByPost.getOrDefault(post.id(), List.of()))))
+						List.copyOf(mediaByPost.getOrDefault(post.id(), List.of())),
+						mediaService.iconUrl(post.authorIconImageKey())))
 				.toList();
 	}
 

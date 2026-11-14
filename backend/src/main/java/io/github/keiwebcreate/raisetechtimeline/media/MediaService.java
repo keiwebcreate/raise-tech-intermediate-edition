@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.OptionalLong;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,8 @@ public class MediaService {
 
 	/** 送ったはずのファイルがない、他人のファイルなど */
 	public static final String MESSAGE_NOT_FOUND = "画像・動画が見つかりません。選び直してください";
+	/** アイコンに使う画像が見つからない（送ったはずのものがない、他人のもの） */
+	public static final String MESSAGE_ICON_NOT_FOUND = "画像が見つかりません。選び直してください";
 
 	private final MediaStorage storage;
 	private final ImageProcessor imageProcessor;
@@ -122,6 +125,41 @@ public class MediaService {
 
 	public String viewUrl(String key) {
 		return storage.viewUrl(key);
+	}
+
+	/** アイコンを見るための期限付きの URL。アイコンがなければ null（画面は頭文字の丸を出す） */
+	public @Nullable String iconUrl(@Nullable String key) {
+		return key == null ? null : storage.viewUrl(key);
+	}
+
+	// ===== アイコン（docs/features/profile.md 3.2。UserService から使う） =====
+
+	/** アイコンを確かめて、正方形の 400×400 の WebP にし、一時置き場（tmp/{利用者}/icons/）に置く */
+	public ImageUploadResponse uploadIcon(long userId, MultipartFile file) {
+		byte[] webp = imageProcessor.toIconWebp(bytes(file));
+		String key = MediaKeys.newTmpIconKey(userId);
+		storage.put(key, webp, MediaKind.IMAGE.contentType());
+		return new ImageUploadResponse(key, storage.viewUrl(key));
+	}
+
+	/**
+	 * その利用者がアイコン用に一時置き場へ置いたものを、正式な場所（icons/）へコピーし、新しいキーを返す。
+	 * 一時置き場のものは、呼ぶ側がコミットのあとに消す
+	 *
+	 * @throws FieldValidationException 他人のキー・でたらめなキー・もう消えている（field は iconKey）
+	 */
+	public String copyIcon(long userId, String tmpKey) {
+		if (!MediaKeys.isTmpIconKeyOf(tmpKey, userId) || storage.size(tmpKey).isEmpty()) {
+			throw new FieldValidationException("iconKey", MESSAGE_ICON_NOT_FOUND);
+		}
+		String key = MediaKeys.newIconKey();
+		storage.copy(tmpKey, key);
+		return key;
+	}
+
+	/** 正式な場所のアイコンのキーの形か（DB にあるキーを消すときの念のための確認） */
+	public boolean isIconKey(String key) {
+		return MediaKeys.isIconKey(key);
 	}
 
 	/**
