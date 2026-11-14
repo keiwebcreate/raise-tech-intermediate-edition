@@ -236,9 +236,8 @@ erDiagram
 | comments | `parent_comment_id` | 直接の返信の数・コメントを消したときに下の返信を探す |
 | comment_likes | `(comment_id, user_id)`（一意） | コメントのいいね数・自分がいいねしたか |
 | comment_likes | `comment_id, id DESC` | コメントにいいねした人の一覧（新しい順） |
-| comment_likes | `user_id` | ユーザーを消したとき |
 | likes | `(post_id, user_id)`（一意） | いいね数・自分がいいねしたか |
-| likes | `user_id` | ユーザーを消したとき |
+| likes | `post_id, id DESC` | いいねした人の一覧（新しい順） |
 | follows | `(follower_id, following_id)`（一意） | フォロー中か・フォロー数・「フォロー中」タブ |
 | follows | `following_id` | フォロワー数・フォロワーの一覧 |
 | refresh_tokens | `token_hash`（一意） | 更新・ログアウトのときにトークンを探す |
@@ -246,6 +245,7 @@ erDiagram
 | refresh_tokens | `expires_at` | 期限切れをまとめて消す（1日1回） |
 
 - ユーザー検索の部分一致（`LIKE '%言葉%'`）は、ふつうの索引では速くならない。ユーザーが増えたら、PostgreSQL の `pg_trgm`（部分一致を速くする仕組み）を足す。今は使わない
+- `likes`・`comment_likes`・`comments` の `user_id` だけの索引（ユーザーを消したときに、その人の行を探す）は作っていない。退会の機能は今回作らないため。作るときに足す
 - コメント数・いいね数・フォロー数は、別の列に数を持たず、毎回数える（数がずれる心配がなく、作りが簡単。今の規模なら十分速い）
 
 ---
@@ -311,4 +311,4 @@ erDiagram
 | 0.4 | 2026-11-08 | 投稿の実装に合わせて `posts`（V3）・`follows`（V4）を作った（8章）。`post_media` は画像・動画の機能のとき |
 | 0.5 | 2026-11-08 | 画像・動画の実装に合わせて `post_media`（V5）を作った（3.2.1 のとおり） |
 | 0.6 | 2026-11-08 | いいねの実装に合わせて `likes`（V6）を作った（3.4 のとおり。索引 `(post_id, id DESC)` を足した） |
-| 0.7 | 2026-11-14 | コメントの実装に合わせて `comments`（V7）・`comment_likes`（V8）を作った。`comments.root_comment_id` と CHECK 制約を足し、索引（4章）を実際のものに直した |
+| 0.7 | 2026-11-14 | コメントの実装に合わせて `comments`（V7）・`comment_likes`（V8）を作った。`comments.root_comment_id` と CHECK 制約を足し、索引（4章）を実際のものに直した（作っていない `user_id` の索引を外し、退会の機能のときに足すと書いた） |
