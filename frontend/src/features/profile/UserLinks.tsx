@@ -22,7 +22,8 @@ export function AvatarLink({ user, onClick, size }: Props & { size?: number }) {
       onClick={onClick}
       tabIndex={-1}
       aria-hidden
-      sx={{ display: 'block', flexShrink: 0, alignSelf: 'flex-start', borderRadius: '50%' }}
+      // リンクの下線が、頭文字の丸の文字にまで付かないようにする
+      sx={{ display: 'block', flexShrink: 0, alignSelf: 'flex-start', borderRadius: '50%', textDecoration: 'none' }}
     >
       <UserAvatar displayName={user.displayName} iconUrl={user.iconUrl} size={size} />
     </Box>

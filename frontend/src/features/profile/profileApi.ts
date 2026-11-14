@@ -18,6 +18,9 @@ export type Profile = {
   followerCount: number
   // 見ている人のプロフィールか
   mine: boolean
+  // 自分がこの人をフォローしているか・この人が自分をフォローしているか
+  following: boolean
+  followedBy: boolean
 }
 
 export type ProfileInput = {
