@@ -4,7 +4,7 @@ import { ThemeProvider } from '@mui/material/styles'
 import { render } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactElement, ReactNode } from 'react'
-import { createMemoryRouter, RouterProvider, useLocation } from 'react-router'
+import { createMemoryRouter, RouterProvider } from 'react-router'
 import { vi } from 'vitest'
 import type { UserResponse } from '../api/types.ts'
 import { AuthContext } from '../features/auth/AuthContext.ts'
@@ -12,6 +12,7 @@ import { FollowProvider } from '../features/follow/FollowProvider.tsx'
 import { PostActionsContext } from '../features/post/PostActionsContext.ts'
 import { NotifyContext } from '../shared/notify.ts'
 import { theme } from '../theme.ts'
+import { LocationProbe } from './LocationProbe.tsx'
 
 // ログイン中の本人（太郎）
 export const ME: UserResponse = {
@@ -29,12 +30,6 @@ type Options = {
   url?: string | { pathname: string; search?: string; state?: unknown }
   // 本物の FollowProvider で包むか（フォローボタンのテスト）
   follow?: boolean
-}
-
-// 今の URL を画面に書き出す（画面が移ったかを確かめるため）
-function LocationProbe() {
-  const location = useLocation()
-  return <output data-testid="location">{location.pathname + location.search}</output>
 }
 
 export function renderWithApp(ui: ReactElement, options: Options = {}) {
