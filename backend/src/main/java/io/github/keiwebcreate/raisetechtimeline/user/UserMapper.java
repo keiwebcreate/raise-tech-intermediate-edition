@@ -1,5 +1,6 @@
 package io.github.keiwebcreate.raisetechtimeline.user;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -34,6 +35,20 @@ public interface UserMapper {
 	Optional<Profile> findProfileByUsername(@Param("username") String username, @Param("viewerId") long viewerId);
 
 	Optional<Profile> findProfileById(@Param("id") long id, @Param("viewerId") long viewerId);
+
+	/**
+	 * ユーザー検索（docs/features/user-search.md 3章）。ユーザー名・表示名のどちらかに言葉を含む人。
+	 * 並び順：ユーザー名の完全一致 → 前方一致 → 部分一致。同じ順位はフォロワーの多い順。
+	 *
+	 * @param text そろえた言葉（UserSearchQuery.text。ユーザー名との完全一致に使う）
+	 * @param prefix 「言葉で始まる」の LIKE の形（エスケープ済み）
+	 * @param contains 「言葉を含む」の LIKE の形（エスケープ済み）
+	 * @param viewerId 見ている人（following・followedBy を、この人から見た値にする）
+	 * @param offset 何人目から読むか（0 から）
+	 */
+	List<SearchedUser> search(@Param("text") String text, @Param("prefix") String prefix,
+			@Param("contains") String contains, @Param("viewerId") long viewerId, @Param("offset") int offset,
+			@Param("limit") int limit);
 
 	/** 表示名・自己紹介・アイコンを変える。変えた行の数を返す */
 	int updateProfile(@Param("id") long id, @Param("displayName") String displayName,

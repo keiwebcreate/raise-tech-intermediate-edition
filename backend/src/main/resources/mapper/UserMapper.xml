@@ -63,6 +63,38 @@
 		WHERE u.id = #{id}
 	</select>
 
+	<!--
+		ユーザー検索（docs/features/user-search.md 3章）。
+		・全角・半角、大文字・小文字を同じとみなすため、表示名は lower(normalize(…, NFKC)) にしてから比べる
+		  （言葉の側も Java の UserSearchQuery で同じようにそろえてある）。ユーザー名はもともと英小文字・数字・_ だけ
+		・prefix・contains は、利用者が入れた % と _ をエスケープ済み。ESCAPE '\' で「\ の次の文字はただの文字」と伝える
+		・rank：0＝ユーザー名が言葉とまったく同じ、1＝ユーザー名か表示名が言葉で始まる、2＝それ以外（途中に含む）
+		・同じ順位はフォロワーの多い順。それも同じなら古い人が先（id の順。続きを読んだときに並びが変わらないように）
+		・フォロワー数とフォローの状態は、同じ SQL の中で数える（1人ごとに別の SQL を出さない＝N+1 問題を起こさない）
+		・部分一致（%言葉%）はふつうの索引では速くならない。ユーザーが増えたら pg_trgm を足す（database-design.md 4章）
+	-->
+	<select id="search" resultType="io.github.keiwebcreate.raisetechtimeline.user.SearchedUser">
+		WITH matched AS (
+			SELECT u.id, u.username, u.display_name, u.bio, u.icon_image_key,
+				lower(normalize(u.display_name, NFKC)) AS name_key
+			FROM users u
+		)
+		SELECT m.id AS user_id, m.username, m.display_name, m.bio, m.icon_image_key,
+			EXISTS (SELECT 1 FROM follows v WHERE v.follower_id = #{viewerId} AND v.following_id = m.id) AS following,
+			EXISTS (SELECT 1 FROM follows v WHERE v.follower_id = m.id AND v.following_id = #{viewerId}) AS followed_by
+		FROM matched m
+		WHERE m.username LIKE #{contains} ESCAPE '\' OR m.name_key LIKE #{contains} ESCAPE '\'
+		ORDER BY
+			CASE
+				WHEN m.username = #{text} THEN 0
+				WHEN m.username LIKE #{prefix} ESCAPE '\' OR m.name_key LIKE #{prefix} ESCAPE '\' THEN 1
+				ELSE 2
+			END,
+			(SELECT count(*) FROM follows f WHERE f.following_id = m.id) DESC,
+			m.id
+		LIMIT #{limit} OFFSET #{offset}
+	</select>
+
 	<update id="updateProfile">
 		UPDATE users
 		SET display_name = #{displayName}, bio = #{bio}, icon_image_key = #{iconImageKey}, updated_at = now()
