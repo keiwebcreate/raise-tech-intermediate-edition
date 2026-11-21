@@ -64,5 +64,16 @@ export default defineConfig({
   test: {
     // src の中の xxx.test.ts を自動テストとして実行する
     include: ['src/**/*.test.{ts,tsx}'],
+    // ブラウザの代わり（Node.js の中で HTML の画面を組み立てる道具）。部品・フックのテストで画面を描くため（ユーザーの決定）
+    environment: 'jsdom',
+    // どのテストの前にも読む準備（画面の確かめ方を足す・テストごとに画面を片付ける・jsdom にない機能のにせもの）
+    setupFiles: ['src/test/setup.ts'],
+    // カバレッジ（テストで通った行・分かれ道の割合）。npm run test:coverage で coverage/ に報告を出す。目標の数字は決めない
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx'],
+      reporter: ['text-summary', 'html'],
+    },
   },
 })
