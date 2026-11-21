@@ -95,7 +95,9 @@ public class AuthService {
 	@Transactional(noRollbackFor = RefreshTokenInvalidException.class)
 	public AuthResult refresh(String refreshToken) {
 		RefreshTokenService.Rotated rotated = refreshTokenService.rotate(refreshToken);
-		User user = userMapper.findById(rotated.userId()).orElseThrow();
+		// 取り替えた直後に本人が退会していたら、500 ではなく「もう更新できない」（REFRESH_INVALID）にする
+		User user = userMapper.findById(rotated.userId())
+				.orElseThrow(() -> new RefreshTokenInvalidException("ユーザーがいません"));
 		return new AuthResult(user, jwtTokenProvider.createAccessToken(user.id()), rotated.token());
 	}
 
