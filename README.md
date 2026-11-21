@@ -55,6 +55,8 @@ Intermediate_edition/
 │   ├── tech-stack.md            # 技術スタック
 │   ├── testing.md               # テスト方針
 │   ├── logging.md               # ログ設計書
+│   ├── operations.md            # 運用設計書
+│   ├── incident-response.md     # 障害対応書
 │   └── infrastructure.md        # インフラ構成
 └── README.md
 ```
@@ -78,3 +80,5 @@ Intermediate_edition/
 | 13 | [docs/infrastructure.md](docs/infrastructure.md) | インフラ構成（AWS） |
 | 14 | [docs/testing.md](docs/testing.md) | テスト方針（単体・結合・画面のテストの分担、TDD 風の進め方、カバレッジ） |
 | 15 | [docs/logging.md](docs/logging.md) | ログ設計書（構造化ログ〈JSON・ECS〉、重さの決まり、出すもの・出さないもの、CloudWatch での見方） |
+| 16 | [docs/operations.md](docs/operations.md) | 運用設計書（監視と知らせ、費用と片付け、バックアップと戻し方、定期の作業、デプロイと戻し方、秘密の値の入れ替え） |
+| 17 | [docs/incident-response.md](docs/incident-response.md) | 障害対応書（障害のときの流れ、よくある障害ごとの調べ方と直し方、記録の残し方） |
