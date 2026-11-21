@@ -13,7 +13,10 @@ function scrollToBottom(setSentinel: (element: HTMLElement | null) => void) {
 
 describe('usePagedUsers', () => {
   it('開いたら最初の20件を目印なしで読み、読み終えたら ready になる', async () => {
-    const load = vi.fn(async (): Promise<UsersChunk> => ({ users: [listedUser(1), listedUser(2)], nextBefore: 10 }))
+    const load = vi.fn(async (_next?: number): Promise<UsersChunk> => ({
+      users: [listedUser(1), listedUser(2)],
+      nextBefore: 10,
+    }))
     const { result } = renderHook(() => usePagedUsers(load))
 
     expect(result.current.state.status).toBe('loading')

@@ -37,7 +37,9 @@ function setup(props: Props = {}) {
     onSubmit,
     box: screen.getByRole('textbox', { name: '本文' }),
     submit: screen.getByRole('button', { name: submitLabel }),
-    imageInput: rendered.container.ownerDocument.querySelector<HTMLInputElement>(`input[type=file][accept="${IMAGE_ACCEPT}"]`),
+    imageInput: rendered.container.ownerDocument.querySelector<HTMLInputElement>(
+      `input[type=file][accept="${IMAGE_ACCEPT}"]`,
+    ),
   }
 }
 

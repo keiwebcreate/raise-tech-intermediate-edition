@@ -95,9 +95,7 @@ describe('SignupPage', () => {
 
   it('サーバーが「登録済み」と返したら、その文言を出し、入力は残す', async () => {
     const message = 'このメールアドレスは登録済みです'
-    signupApi.mockRejectedValueOnce(
-      new ApiError(409, 'EMAIL_DUPLICATED', message, [{ field: 'email', message }]),
-    )
+    signupApi.mockRejectedValueOnce(new ApiError(409, 'EMAIL_DUPLICATED', message, [{ field: 'email', message }]))
     const { user, auth } = setup()
 
     await fill(user)

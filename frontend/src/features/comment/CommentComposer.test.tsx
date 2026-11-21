@@ -18,7 +18,9 @@ function setup(props: { replyToUsername?: string; onSubmit?: (content: string) =
       replyToUsername={props.replyToUsername}
     />,
   )
-  const box = screen.getByRole('textbox', { name: props.replyToUsername ? `@${props.replyToUsername} への返信` : 'コメント' })
+  const box = screen.getByRole('textbox', {
+    name: props.replyToUsername ? `@${props.replyToUsername} への返信` : 'コメント',
+  })
   const submit = screen.getByRole('button', { name: props.replyToUsername ? '返信する' : 'コメントする' })
   return { ...rendered, onSubmit, onCancel, box, submit }
 }

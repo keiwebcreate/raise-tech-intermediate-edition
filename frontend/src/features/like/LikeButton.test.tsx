@@ -7,7 +7,9 @@ import { LikeButton } from './LikeButton.tsx'
 import type { LikeState } from './likeToggler.ts'
 
 function setup(props: { liked: boolean; likeCount: number; send?: (liked: boolean) => Promise<LikeState> }) {
-  const send = vi.fn(props.send ?? (async (liked: boolean) => ({ liked, likeCount: props.likeCount + (liked ? 1 : -1) })))
+  const send = vi.fn(
+    props.send ?? (async (liked: boolean) => ({ liked, likeCount: props.likeCount + (liked ? 1 : -1) })),
+  )
   const onSettled = vi.fn()
   const onCountClick = vi.fn()
   const rendered = renderWithApp(
