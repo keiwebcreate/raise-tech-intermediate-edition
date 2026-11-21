@@ -9,12 +9,15 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import io.github.keiwebcreate.raisetechtimeline.common.error.FieldValidationException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.UserNotFoundException;
+import io.github.keiwebcreate.raisetechtimeline.follow.dto.FollowUsersResponse;
 import io.github.keiwebcreate.raisetechtimeline.media.MediaService;
 import io.github.keiwebcreate.raisetechtimeline.post.PostService;
 import io.github.keiwebcreate.raisetechtimeline.post.dto.TimelineResponse;
 import io.github.keiwebcreate.raisetechtimeline.user.dto.ProfileResponse;
 import io.github.keiwebcreate.raisetechtimeline.user.dto.ProfileUpdateRequest;
+import io.github.keiwebcreate.raisetechtimeline.user.dto.UserSearchResponse;
 
 /**
  * プロフィールの表示と編集（docs/features/profile.md 3章）。
@@ -22,6 +25,9 @@ import io.github.keiwebcreate.raisetechtimeline.user.dto.ProfileUpdateRequest;
  */
 @Service
 public class UserService {
+
+	/** ユーザー検索の結果を1回に読む件数 */
+	public static final int SEARCH_PAGE_SIZE = 20;
 
 	private final UserMapper userMapper;
 	private final PostService postService;
@@ -87,6 +93,30 @@ public class UserService {
 		userMapper.updateProfile(userId, displayName, bio, newKey);
 		mediaService.deleteAfterCommit(deleteAfterCommit);
 		return toResponse(userMapper.findProfileById(userId, userId).orElseThrow(UserNotFoundException::new), userId);
+	}
+
+	/**
+	 * ユーザー検索（docs/features/user-search.md 3章）。20件ずつ。自分も結果に出す（画面がフォローボタンを出さない）。
+	 *
+	 * @param q 送られた言葉（そろえる前）
+	 * @param offset 何人目から読むか。前の返事の nextOffset（最初は 0）
+	 * @throws io.github.keiwebcreate.raisetechtimeline.common.error.FieldValidationException 言葉が空・50文字を超えた・offset が負
+	 */
+	@Transactional(readOnly = true)
+	public UserSearchResponse search(long viewerId, String q, int offset) {
+		if (offset < 0) {
+			throw new FieldValidationException("offset", "offset は0以上にしてください");
+		}
+		UserSearchQuery query = UserSearchQuery.of(q);
+		// 1件多く取って、続きがあるかを知る
+		List<SearchedUser> rows = userMapper.search(query.text(), query.prefixPattern(), query.containsPattern(),
+				viewerId, offset, SEARCH_PAGE_SIZE + 1);
+		List<FollowUsersResponse.User> users = rows.stream().limit(SEARCH_PAGE_SIZE)
+				.map(row -> new FollowUsersResponse.User(row.userId(), row.username(), row.displayName(), row.bio(),
+						mediaService.iconUrl(row.iconImageKey()), row.following(), row.followedBy()))
+				.toList();
+		Integer nextOffset = rows.size() > SEARCH_PAGE_SIZE ? offset + SEARCH_PAGE_SIZE : null;
+		return new UserSearchResponse(users, nextOffset);
 	}
 
 	private Profile findByUsername(String username, long viewerId) {

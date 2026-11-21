@@ -14,6 +14,7 @@ import io.github.keiwebcreate.raisetechtimeline.auth.LoginUser;
 import io.github.keiwebcreate.raisetechtimeline.post.dto.TimelineResponse;
 import io.github.keiwebcreate.raisetechtimeline.user.dto.ProfileResponse;
 import io.github.keiwebcreate.raisetechtimeline.user.dto.ProfileUpdateRequest;
+import io.github.keiwebcreate.raisetechtimeline.user.dto.UserSearchResponse;
 import jakarta.validation.Valid;
 
 /**
@@ -21,6 +22,7 @@ import jakarta.validation.Valid;
  *
  * | メソッド・URL                             | 中身 |
  * |---|---|
+ * | GET /api/users?q=…&offset=                 | ユーザー検索（docs/features/user-search.md 8章。20件ずつ） |
  * | GET /api/users/{ユーザー名}                | プロフィール |
  * | GET /api/users/{ユーザー名}/posts?before=  | その人の投稿（新しい順に20件） |
  * | PUT /api/users/me                          | 自分のプロフィールを変える（表示名・自己紹介・アイコン） |
@@ -35,6 +37,13 @@ public class UserController {
 
 	public UserController(UserService userService) {
 		this.userService = userService;
+	}
+
+	// 検索は /api/users/search にしない。「search」という名前のユーザーのプロフィール（/api/users/{ユーザー名}）とぶつかるため
+	@GetMapping
+	UserSearchResponse search(@AuthenticationPrincipal LoginUser loginUser, @RequestParam String q,
+			@RequestParam(defaultValue = "0") int offset) {
+		return userService.search(loginUser.id(), q, offset);
 	}
 
 	@GetMapping("/{username}")
