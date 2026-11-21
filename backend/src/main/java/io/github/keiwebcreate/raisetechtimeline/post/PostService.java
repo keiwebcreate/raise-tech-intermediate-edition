@@ -98,7 +98,12 @@ public class PostService {
 	 */
 	@Transactional
 	public PostResponse create(long userId, String content, @Nullable List<String> media) {
-		long postId = postMapper.insert(userId, normalize(content));
+		String text = normalize(content);
+		if (media != null && !media.isEmpty()) {
+			// 入力をすべて確かめてから保存する（docs/features/post.md 4.1）
+			checkMedia(userId, media, Set.of());
+		}
+		long postId = postMapper.insert(userId, text);
 		if (media != null && !media.isEmpty()) {
 			replaceMedia(userId, postId, media, List.of());
 		}
@@ -146,14 +151,8 @@ public class PostService {
 	 * 4. post_media を並べ直す。外したもの・コピー元の一時ファイルは、コミットのあとに S3 から消す
 	 */
 	private void replaceMedia(long userId, long postId, List<String> requested, List<PostMedia> current) {
-		// 先にキーの形と持ち主を確かめる（でたらめなキーに、組み合わせの文言を返さないように）
 		Set<String> currentKeys = current.stream().map(PostMedia::s3Key).collect(Collectors.toSet());
-		for (String key : requested) {
-			if (key == null || (!currentKeys.contains(key) && !mediaService.isOwnTmpKey(key, userId))) {
-				throw new FieldValidationException("media", MediaService.MESSAGE_NOT_FOUND);
-			}
-		}
-		checkCombination(requested);
+		checkMedia(userId, requested, currentKeys);
 		if (requested.equals(current.stream().map(PostMedia::s3Key).toList())) {
 			// 変わっていない
 			return;
@@ -183,6 +182,21 @@ public class PostService {
 		removed.removeAll(finalKeys);
 		removed.addAll(tmpKeys);
 		mediaService.deleteAfterCommit(removed);
+	}
+
+	/**
+	 * 画像・動画のキーを確かめる。今の投稿のもの（currentKeys）か、本人の一時置き場のものだけ使える。そのうえで組み合わせ（3章）。
+	 *
+	 * @throws FieldValidationException 使えないキー・組み合わせの誤り（項目は media）
+	 */
+	private void checkMedia(long userId, List<String> requested, Set<String> currentKeys) {
+		// 先にキーの形と持ち主を確かめる（でたらめなキーに、組み合わせの文言を返さないように）
+		for (String key : requested) {
+			if (key == null || (!currentKeys.contains(key) && !mediaService.isOwnTmpKey(key, userId))) {
+				throw new FieldValidationException("media", MediaService.MESSAGE_NOT_FOUND);
+			}
+		}
+		checkCombination(requested);
 	}
 
 	private static void checkCombination(List<String> keys) {
