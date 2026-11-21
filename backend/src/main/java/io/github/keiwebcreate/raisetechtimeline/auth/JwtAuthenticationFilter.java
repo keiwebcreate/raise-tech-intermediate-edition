@@ -3,12 +3,14 @@ package io.github.keiwebcreate.raisetechtimeline.auth;
 import java.io.IOException;
 import java.util.List;
 
+import org.slf4j.MDC;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
 
+import io.github.keiwebcreate.raisetechtimeline.common.logging.LogKeys;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
@@ -50,6 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 				SecurityContext context = SecurityContextHolder.createEmptyContext();
 				context.setAuthentication(authentication);
 				SecurityContextHolder.setContext(context);
+				// この API の間に出るログすべてに、ログイン中の人の ID を付ける（docs/logging.md 3章）。
+				// 外すのは RequestLoggingFilter（一番外側）。アクセスログにも付けるため
+				MDC.put(LogKeys.USER_ID, String.valueOf(userId));
 			} catch (ExpiredJwtException e) {
 				request.setAttribute(TOKEN_EXPIRED_ATTRIBUTE, Boolean.TRUE);
 			} catch (JwtException | IllegalArgumentException e) {
