@@ -53,6 +53,7 @@ Intermediate_edition/
 │   ├── screen-design.md         # 画面設計書
 │   ├── database-design.md       # データベース設計書
 │   ├── tech-stack.md            # 技術スタック
+│   ├── testing.md               # テスト方針
 │   └── infrastructure.md        # インフラ構成
 └── README.md
 ```
@@ -74,3 +75,4 @@ Intermediate_edition/
 | 11 | [docs/database-design.md](docs/database-design.md) | データベース設計書（ER 図・テーブル定義） |
 | 12 | [docs/tech-stack.md](docs/tech-stack.md) | 技術スタック |
 | 13 | [docs/infrastructure.md](docs/infrastructure.md) | インフラ構成（AWS） |
+| 14 | [docs/testing.md](docs/testing.md) | テスト方針（単体・結合・画面のテストの分担、TDD 風の進め方、カバレッジ） |
