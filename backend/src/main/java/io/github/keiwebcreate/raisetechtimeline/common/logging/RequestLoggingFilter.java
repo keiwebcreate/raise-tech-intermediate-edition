@@ -55,13 +55,18 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 		MDC.put(LogKeys.REQUEST_ID, requestId);
 		response.setHeader(LogKeys.REQUEST_ID_HEADER, requestId);
 		long start = System.nanoTime();
+		boolean failed = false;
 		try {
 			filterChain.doFilter(request, response);
+		} catch (IOException | ServletException | RuntimeException e) {
+			// 例外が外まで抜けると、500 の返事は Tomcat がこのあとで作る。今の番号（200 のまま）ではなく 500 と記録する
+			failed = true;
+			throw e;
 		} finally {
 			long durationMs = (System.nanoTime() - start) / NANOS_PER_MILLI;
 			String method = request.getMethod();
 			String path = pathOf(request);
-			int status = response.getStatus();
+			int status = failed ? HttpServletResponse.SC_INTERNAL_SERVER_ERROR : response.getStatus();
 			log.atInfo()
 					.addKeyValue("method", method)
 					.addKeyValue("path", path)
