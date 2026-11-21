@@ -23,6 +23,10 @@ import io.github.keiwebcreate.raisetechtimeline.common.error.RefreshTokenInvalid
 import io.github.keiwebcreate.raisetechtimeline.media.MediaService;
 import io.github.keiwebcreate.raisetechtimeline.user.User;
 import io.github.keiwebcreate.raisetechtimeline.user.UserMapper;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -35,6 +39,7 @@ import jakarta.validation.Valid;
  * | POST /api/auth/logout  | リフレッシュトークンを取り消し、2つの Cookie を消す |
  * | GET  /api/auth/me      | ログインしている本人 |
  */
+@Tag(name = "認証", description = "新規登録・ログイン・ログアウト（docs/features/authentication.md 8章）")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -54,16 +59,32 @@ public class AuthController {
 		this.mediaService = mediaService;
 	}
 
+	@Operation(summary = "新規登録")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "201", description = "登録してログインした。Cookie ACCESS_TOKEN・REFRESH_TOKEN が付く")
+	@ApiResponse(responseCode = "400",
+			description = "入力の誤り（VALIDATION_ERROR。errors[].field は email・password・username・displayName）")
+	@ApiResponse(responseCode = "409", description = "メールアドレス・ユーザー名が使われている（EMAIL_DUPLICATED・USERNAME_DUPLICATED）")
 	@PostMapping("/signup")
 	ResponseEntity<UserResponse> signup(@Valid @RequestBody SignupRequest request) {
 		return withTokens(HttpStatus.CREATED, authService.signup(request));
 	}
 
+	@Operation(summary = "ログイン")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "200", description = "ログインした。Cookie ACCESS_TOKEN・REFRESH_TOKEN が付く")
+	@ApiResponse(responseCode = "400", description = "入力の誤り（VALIDATION_ERROR。errors[].field は email・password）")
+	@ApiResponse(responseCode = "401", description = "メールアドレスかパスワードが違う（LOGIN_FAILED）")
+	@ApiResponse(responseCode = "429", description = "失敗が多すぎる。15分に10回まで（RATE_LIMITED。Retry-After ヘッダーに待つ秒数）")
 	@PostMapping("/login")
 	ResponseEntity<UserResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest) {
 		return withTokens(HttpStatus.OK, authService.login(request, servletRequest.getRemoteAddr()));
 	}
 
+	@Operation(summary = "ログインの延長", description = "Cookie REFRESH_TOKEN（7日）で、期限の切れた ACCESS_TOKEN（15分）を取り直す")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "200", description = "Cookie ACCESS_TOKEN・REFRESH_TOKEN を新しくした")
+	@ApiResponse(responseCode = "401", description = "リフレッシュトークンが使えない（REFRESH_INVALID。2つの Cookie を消す）")
 	@PostMapping("/refresh")
 	ResponseEntity<UserResponse> refresh(
 			@CookieValue(name = AuthCookies.REFRESH_TOKEN, required = false) @Nullable String refreshToken) {
@@ -73,6 +94,9 @@ public class AuthController {
 		return withTokens(HttpStatus.OK, authService.refresh(refreshToken));
 	}
 
+	@Operation(summary = "ログアウト", description = "ログインの期限が切れていても呼べる")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "204", description = "ログアウトした（リフレッシュトークンを取り消し、2つの Cookie を消す）")
 	@PostMapping("/logout")
 	ResponseEntity<Void> logout(
 			@CookieValue(name = AuthCookies.REFRESH_TOKEN, required = false) @Nullable String refreshToken) {
@@ -80,6 +104,8 @@ public class AuthController {
 		return ResponseEntity.noContent().headers(setCookies(authCookies.clear())).build();
 	}
 
+	@Operation(summary = "ログインしている本人")
+	@ApiResponse(responseCode = "200", description = "本人")
 	@GetMapping("/me")
 	ResponseEntity<UserResponse> me(@AuthenticationPrincipal LoginUser loginUser) {
 		// JWT は正しいが、ユーザーがもういない（退会など）ときは、ログインしていない扱い

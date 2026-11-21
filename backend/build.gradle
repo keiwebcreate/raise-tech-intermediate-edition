@@ -31,6 +31,7 @@ ext {
 	webpImageioVersion = '0.11.0'    // ImageIO で WebP を書けるようにする（中に libwebp が入っている）
 	metadataExtractorVersion = '2.22.0' // MP4 の長さ・圧縮の種類を読む
 	s3mockVersion = '5.2.3'          // テストで S3 の代わりに動かす Adobe S3Mock
+	springdocVersion = '3.2.0'       // API 仕様書（Swagger）。3.2.0 は Spring Boot 4.1.2 に合わせた版
 }
 
 dependencies {
@@ -53,6 +54,8 @@ dependencies {
 	implementation "com.twelvemonkeys.imageio:imageio-webp:${twelvemonkeysVersion}"
 	implementation "com.github.usefulness:webp-imageio:${webpImageioVersion}"
 	implementation "com.drewnoakes:metadata-extractor:${metadataExtractorVersion}"
+	// API 仕様書（OpenAPI）を作り、Swagger UI で見せる。開くのは開発中だけ（application-dev.yml）
+	implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'

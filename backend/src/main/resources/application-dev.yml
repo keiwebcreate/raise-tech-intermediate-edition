@@ -4,6 +4,16 @@ logging:
     # MyBatis が実行した SQL をログに出す（開発のときだけ）
     io.github.keiwebcreate.raisetechtimeline: debug
 
+# API 仕様書（Swagger）を開く：http://localhost:8081/swagger-ui.html（SwaggerConfig）
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    # 画面から試すとき、Cookie の XSRF-TOKEN を読んで、ヘッダー X-XSRF-TOKEN に付ける（CSRF 対策を通すため）
+    csrf:
+      enabled: true
+
 app:
   storage:
     # 開発中は Docker の S3Mock（compose.yaml の s3。バケットは起動時に作られる）
