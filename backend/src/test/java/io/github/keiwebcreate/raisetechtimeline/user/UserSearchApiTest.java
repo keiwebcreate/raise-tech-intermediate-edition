@@ -219,6 +219,10 @@ class UserSearchApiTest {
 				.andExpect(jsonPath("$.errors[0].message").value("検索する言葉は50文字以内で入力してください"));
 		// 50文字はよい（絵文字も1文字）
 		as(me, search("😀".repeat(50))).andExpect(status().isOk());
+		// 文字数はそろえる前の言葉で数える。「㍿」は NFKC で「株式会社」（4文字）になるが、50文字なのでよい
+		as(me, search("㍿".repeat(50))).andExpect(status().isOk());
+		// 先頭の「@」は数えない
+		as(me, search("@" + "あ".repeat(50))).andExpect(status().isOk());
 	}
 
 	@Test

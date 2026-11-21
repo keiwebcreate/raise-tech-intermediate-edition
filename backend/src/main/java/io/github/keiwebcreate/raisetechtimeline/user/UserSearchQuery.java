@@ -27,19 +27,28 @@ public record UserSearchQuery(String text) {
 	 * @throws FieldValidationException 空・50文字を超えた（項目は q）
 	 */
 	public static UserSearchQuery of(String raw) {
-		// 全角の「＠」や全角の空白も、NFKC で半角になるので、そろえてから取り除く
-		String value = Normalizer.normalize(raw, Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).strip();
-		if (value.startsWith("@")) {
-			value = value.substring(1).strip();
-		}
-		if (value.isEmpty()) {
+		// 文字数は、そろえる前の言葉で数える（画面が数える値と同じにする）。
+		// NFKC には文字が増えるものがある（「㍿」1文字 →「株式会社」4文字）ので、そろえたあとで数えると画面と食い違う
+		String input = withoutAt(raw);
+		if (input.isEmpty()) {
 			throw new FieldValidationException(FIELD, "検索する言葉を入力してください");
 		}
 		// 見た目の1文字を1文字と数える（絵文字も1文字）
-		if (value.codePointCount(0, value.length()) > MAX_LENGTH) {
+		if (input.codePointCount(0, input.length()) > MAX_LENGTH) {
 			throw new FieldValidationException(FIELD, "検索する言葉は50文字以内で入力してください");
 		}
-		return new UserSearchQuery(value);
+		// 全角の「＠」や全角の空白も NFKC で半角になるので、そろえてからもう一度取り除く
+		String normalized = Normalizer.normalize(input, Normalizer.Form.NFKC).toLowerCase(Locale.ROOT);
+		return new UserSearchQuery(withoutAt(normalized));
+	}
+
+	/** 前後の空白と、先頭の「@」（全角の「＠」も）を取り除く */
+	private static String withoutAt(String value) {
+		String stripped = value.strip();
+		if (stripped.startsWith("@") || stripped.startsWith("＠")) {
+			stripped = stripped.substring(1).strip();
+		}
+		return stripped;
 	}
 
 	/** 「言葉を含む」の LIKE の形（%言葉%） */
