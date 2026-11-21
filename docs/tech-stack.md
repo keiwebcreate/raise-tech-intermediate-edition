@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.6 |
+| 版 | 0.7 |
 | 作成日 | 2026-11-08 |
 | 状態 | たたき台（ユーザーの確認待ち） |
 
@@ -30,7 +30,9 @@
 | React Router | 8.5.1 | URL ごとに画面を切り替える（`react-router-dom` は 8 から `react-router` にまとめられた） |
 | axios | 1.21.0 | サーバーとの通信（講義と同じ道具）。CSRF のトークンをヘッダーに付ける機能を最初から持つ |
 | Node.js | **24**（24.22.2） | Vite・npm を動かす。画面のビルド（本番用のファイル作り）に使う。`frontend/.node-version` |
-| Vitest | 5.1.0 | 画面のテスト |
+| Vitest | 5.1.1 | 画面のテスト。カバレッジは @vitest/coverage-v8 5.1.1（目標の数字は決めない） |
+| React Testing Library | **16.3.3**（dom 10.4.2・user-event 14.6.13・jest-dom 8.0.0。2026-11-21 に最新を確認） | 画面の部品・フックのテスト。部品を描き、使う人と同じように押す・打つ操作をして、画面に出たものを確かめる（[testing.md](testing.md)） |
+| jsdom | **31.0.1** | テストで使うブラウザの代わり（Node.js の中で HTML の画面を組み立てる）。happy-dom より本物のブラウザに近く、React Testing Library・Material UI の説明もこれが前提（2026-11-21、ユーザーの決定） |
 | oxlint・Prettier | 1.92.0・3.9.10 | コードのチェックと書き方をそろえる道具（トレロ風アプリと同じ設定） |
 
 ### 2.2 サーバー（バックエンド）
@@ -110,3 +112,4 @@
 | 0.4 | 2026-11-08 | 画像・動画の投稿で、AWS SDK・Thumbnailator・TwelveMonkeys・webp-imageio・metadata-extractor・S3Mock を追加（版も確定） |
 | 0.5 | 2026-11-21 | API 仕様書（Swagger）のために springdoc-openapi 3.2.0 を追加 |
 | 0.6 | 2026-11-21 | 単体テスト（#49）のために Mockito・JaCoCo 0.8.16 を追加 |
+| 0.7 | 2026-11-21 | 画面の部品・フックのテスト（#53）のために React Testing Library 16.3.3・jsdom 31.0.1・Vitest のカバレッジを追加。Vitest を 5.1.1 に |
