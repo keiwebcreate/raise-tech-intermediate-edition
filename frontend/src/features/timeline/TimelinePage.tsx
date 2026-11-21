@@ -7,6 +7,7 @@ import Tab from '@mui/material/Tab'
 import Tabs from '@mui/material/Tabs'
 import Typography from '@mui/material/Typography'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Link as RouterLink } from 'react-router'
 import { useAuth } from '../auth/AuthContext.ts'
 import { MESSAGES } from '../../shared/messages.ts'
 import { useNotify } from '../../shared/notify.ts'
@@ -258,13 +259,23 @@ function TimelineSkeleton() {
   )
 }
 
-// 空のとき（timeline.md 3章）。検索の画面はまだないので、リンクは検索の機能を作るときに足す
+// 空のとき（timeline.md 3章）。フォロー中タブには、検索の画面へのリンクを出す
 function EmptyTimeline({ tab }: { tab: postApi.Tab }) {
+  if (tab === 'all') {
+    return (
+      <Typography color="text.secondary" sx={{ p: 4, textAlign: 'center' }}>
+        まだ投稿がありません
+      </Typography>
+    )
+  }
   return (
-    <Typography color="text.secondary" sx={{ p: 4, textAlign: 'center' }}>
-      {tab === 'all'
-        ? 'まだ投稿がありません'
-        : 'まだ誰もフォローしていません。『すべて』や検索から、気になる人を探してみましょう'}
-    </Typography>
+    <Box sx={{ p: 4, textAlign: 'center' }}>
+      <Typography color="text.secondary">
+        まだ誰もフォローしていません。『すべて』や検索から、気になる人を探してみましょう
+      </Typography>
+      <Button component={RouterLink} to="/search" variant="outlined" sx={{ mt: 2 }}>
+        ユーザーを検索
+      </Button>
+    </Box>
   )
 }

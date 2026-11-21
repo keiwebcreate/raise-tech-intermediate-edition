@@ -12,6 +12,7 @@ import { PostActionsProvider } from './features/post/PostActionsProvider.tsx'
 import { PostDetailPage } from './features/post/PostDetailPage.tsx'
 import { ProfileEditPage } from './features/profile/ProfileEditPage.tsx'
 import { ProfilePage } from './features/profile/ProfilePage.tsx'
+import { SearchPage } from './features/search/SearchPage.tsx'
 import { TimelinePage } from './features/timeline/TimelinePage.tsx'
 import { AppLayout } from './layout/AppLayout.tsx'
 import { NotificationProvider } from './shared/notification.tsx'
@@ -93,6 +94,15 @@ function AppRoutes() {
           element={
             <Member>
               <FollowListPage kind="followers" />
+            </Member>
+          }
+        />
+        {/* S-08 ユーザー検索 */}
+        <Route
+          path="/search"
+          element={
+            <Member>
+              <SearchPage />
             </Member>
           }
         />

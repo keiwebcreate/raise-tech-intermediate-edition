@@ -5,6 +5,7 @@ import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined'
 import LogoutIcon from '@mui/icons-material/Logout'
 import PersonIcon from '@mui/icons-material/Person'
 import PersonOutlineIcon from '@mui/icons-material/PersonOutlineOutlined'
+import SearchIcon from '@mui/icons-material/Search'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import ButtonBase from '@mui/material/ButtonBase'
@@ -25,13 +26,14 @@ import { UserAvatar } from '../shared/UserAvatar.tsx'
 // - パソコン（md：1024px 以上）：左にメニュー、真ん中にメイン（600px）
 // - タブレット（sm：768〜1023px）：左にアイコンだけのメニュー
 // - スマホ（767px 以下）：下にメニュー、右下に丸い「投稿する」
-// メニューは、今ある行き先（ホーム・プロフィール・投稿する・自分 → ログアウト）だけ。検索はその機能のときに足す
+// メニューは、ホーム・検索・プロフィール・投稿する・自分（→ ログアウト）（screen-design.md 2章）
 export function AppLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   const { openCreate } = usePostActions()
   const { pathname } = useLocation()
   const [accountAnchor, setAccountAnchor] = useState<HTMLElement | null>(null)
   const isHome = pathname === '/'
+  const isSearch = pathname === '/search'
   // 自分のプロフィール（/users/自分）を見ているか。ユーザー名は大文字・小文字を区別しない
   const myProfile = user ? profilePath(user.username) : '/'
   const isMyProfile = user ? sameUsername(decodeURIComponent(pathname), `/users/${user.username}`) : false
@@ -115,6 +117,27 @@ export function AppLayout({ children }: { children: ReactNode }) {
         >
           <Box component="span" sx={{ display: { sm: 'none', md: 'inline' } }}>
             ホーム
+          </Box>
+        </Button>
+
+        {/* 検索のアイコンには「塗った形」がないので、今いる画面のときはアイコンに色を付ける（ほかは塗った形に替える） */}
+        <Button
+          component={NavLink}
+          to="/search"
+          aria-current={isSearch ? 'page' : undefined}
+          startIcon={<SearchIcon color={isSearch ? 'primary' : undefined} />}
+          sx={{
+            justifyContent: { sm: 'center', md: 'flex-start' },
+            color: 'text.primary',
+            fontSize: 18,
+            fontWeight: isSearch ? 700 : 400,
+            px: { sm: 1.5, md: 2 },
+            minWidth: 0,
+            '& .MuiButton-startIcon': { mr: { sm: 0, md: 1.5 }, ml: 0 },
+          }}
+        >
+          <Box component="span" sx={{ display: { sm: 'none', md: 'inline' } }}>
+            検索
           </Box>
         </Button>
 
@@ -230,6 +253,9 @@ export function AppLayout({ children }: { children: ReactNode }) {
       >
         <IconButton component={NavLink} to="/" aria-label="ホーム" aria-current={isHome ? 'page' : undefined}>
           {isHome ? <HomeIcon color="primary" /> : <HomeOutlinedIcon />}
+        </IconButton>
+        <IconButton component={NavLink} to="/search" aria-label="検索" aria-current={isSearch ? 'page' : undefined}>
+          <SearchIcon color={isSearch ? 'primary' : undefined} />
         </IconButton>
         <IconButton
           component={NavLink}
