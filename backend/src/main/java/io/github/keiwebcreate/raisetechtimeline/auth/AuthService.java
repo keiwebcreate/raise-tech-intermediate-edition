@@ -2,6 +2,8 @@ package io.github.keiwebcreate.raisetechtimeline.auth;
 
 import java.util.Locale;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,8 +13,10 @@ import io.github.keiwebcreate.raisetechtimeline.auth.dto.LoginRequest;
 import io.github.keiwebcreate.raisetechtimeline.auth.dto.SignupRequest;
 import io.github.keiwebcreate.raisetechtimeline.common.error.EmailDuplicatedException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.LoginFailedException;
+import io.github.keiwebcreate.raisetechtimeline.common.error.RateLimitedException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.RefreshTokenInvalidException;
 import io.github.keiwebcreate.raisetechtimeline.common.error.UsernameDuplicatedException;
+import io.github.keiwebcreate.raisetechtimeline.common.logging.LogKeys;
 import io.github.keiwebcreate.raisetechtimeline.user.ProfileText;
 import io.github.keiwebcreate.raisetechtimeline.user.User;
 import io.github.keiwebcreate.raisetechtimeline.user.UserMapper;
@@ -23,6 +27,8 @@ import io.github.keiwebcreate.raisetechtimeline.user.UserMapper;
  */
 @Service
 public class AuthService {
+
+	private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
 	private final UserMapper userMapper;
 	private final PasswordEncoder passwordEncoder;
@@ -78,7 +84,12 @@ public class AuthService {
 	 */
 	@Transactional
 	public AuthResult login(LoginRequest request, String clientIp) {
-		loginRateLimiter.check(clientIp);
+		try {
+			loginRateLimiter.check(clientIp);
+		} catch (RateLimitedException e) {
+			log.atWarn().addKeyValue(LogKeys.CLIENT_IP, clientIp).log("ログインの失敗が多すぎるため断りました");
+			throw e;
+		}
 		String email = request.email().trim().toLowerCase(Locale.ROOT);
 		User user = userMapper.findByEmail(email).orElse(null);
 		// 登録されていないメールアドレスでも、照らし合わせを1回する（答えが返るまでの時間で、登録の有無を推測させない）
@@ -86,6 +97,8 @@ public class AuthService {
 		boolean matched = passwordEncoder.matches(request.password(), hash);
 		if (user == null || !matched) {
 			loginRateLimiter.recordFailure(clientIp);
+			// メールアドレスは出さない（docs/logging.md 6章）。同じ接続元からの失敗を追えるように、接続元だけ出す
+			log.atWarn().addKeyValue(LogKeys.CLIENT_IP, clientIp).log("ログインに失敗しました");
 			throw new LoginFailedException();
 		}
 		return issueTokens(user);

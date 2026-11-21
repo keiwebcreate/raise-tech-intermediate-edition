@@ -4,6 +4,13 @@ spring:
   datasource:
     password: test-only
 
+# ログの環境の名前（docs/logging.md 2章）
+logging:
+  structured:
+    ecs:
+      service:
+        environment: test
+
 # API 仕様書が作れることを、テストで確かめる（SwaggerApiTest）
 springdoc:
   api-docs:

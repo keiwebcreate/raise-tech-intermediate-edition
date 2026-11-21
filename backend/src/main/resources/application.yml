@@ -17,6 +17,16 @@ spring:
       max-file-size: 6MB
       max-request-size: 7MB
 
+# ログ（docs/logging.md）。1行ずつ JSON（ECS の形）で標準出力に出す。本番は CloudWatch Logs に送る。
+# 開発・テストも同じ形にする（ユーザーの決定）。環境の名前は application-dev.yml・application-test.yml で上書きする
+logging:
+  structured:
+    format:
+      console: ecs
+    ecs:
+      service:
+        environment: production
+
 # API 仕様書（Swagger）。本番では出さない（API の住所と送り方の一覧を、攻撃する人に見せない）。
 # 開発（application-dev.yml）とテスト（application-test.yml）でだけ true にする
 springdoc:
