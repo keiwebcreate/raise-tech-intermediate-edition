@@ -85,6 +85,14 @@ function VideoTile({ item, draft }: { item: DraftItem; draft: MediaDraft }) {
         sx={{ display: 'block', width: '100%', maxHeight: 240, borderRadius: 2, bgcolor: '#000' }}
       />
       <RemoveButton label="動画を外す" onClick={() => draft.remove(item.id)} />
+      {item.status === 'checking' && (
+        <Box sx={{ mt: 1 }} aria-live="polite">
+          <Typography variant="body2" color="text.secondary">
+            動画を確かめています
+          </Typography>
+          <LinearProgress aria-label="動画を確かめています" />
+        </Box>
+      )}
       {item.status === 'uploading' && (
         <Box sx={{ mt: 1 }} aria-live="polite">
           <Typography variant="body2" color="text.secondary">

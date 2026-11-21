@@ -175,6 +175,9 @@ describe('PostComposer：画像', () => {
 
     expect(submit).toBeDisabled()
     expect(screen.getByRole('button', { name: '画像を選ぶ' })).toBeDisabled()
+    // まだ送っていないので「送信中 0%」ではなく、確かめていることを出す
+    expect(screen.getByText('動画を確かめています')).toBeInTheDocument()
+    expect(screen.queryByText(/送信中/)).not.toBeInTheDocument()
   })
 
   it('編集のときは今の画像のキーをそのまま送り返す（post.md 8章）', async () => {

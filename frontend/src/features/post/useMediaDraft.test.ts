@@ -262,6 +262,8 @@ describe('useMediaDraft：動画', () => {
 
     expect(result.current.kind).toBe('video')
     expect(result.current.ready).toBe(false)
+    // まだ送っていないので「送信中」ではなく「確かめ中」
+    expect(result.current.items[0].status).toBe('checking')
   })
 
   it('長すぎたときは、並べた動画を外す', async () => {

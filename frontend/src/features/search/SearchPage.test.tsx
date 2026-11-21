@@ -1,6 +1,6 @@
 // ユーザー検索の画面（S-08。user-search.md 3章・4.1・5章、screen-design.md 3.6）
-import { fireEvent, screen, waitFor, within } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MESSAGES } from '../../shared/messages.ts'
 import { listedUser } from '../../test/data.ts'
 import { renderWithApp } from '../../test/render.tsx'
@@ -17,6 +17,17 @@ function setup(url = '/search') {
 
 // 検索欄は type="search" なので、役割は searchbox
 const searchBox = () => screen.getByRole('searchbox', { name: 'ユーザーを検索' })
+
+// にせものの時計を進める（入力が止まって0.3秒を待つ）。そのあいだの API の返事も受け取りきる
+async function waitMs(ms: number) {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(ms)
+  })
+}
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 beforeEach(() => {
   searchApi.mockReset()
@@ -95,16 +106,18 @@ describe('SearchPage：打って検索する', () => {
   it('日本語の変換中は検索せず、変換が終わってから検索する（4.1）', async () => {
     setup()
     const box = searchBox()
+    vi.useFakeTimers()
 
     fireEvent.compositionStart(box)
     fireEvent.change(box, { target: { value: 'たろ' } })
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await waitMs(500)
     expect(searchApi).not.toHaveBeenCalled()
 
     fireEvent.change(box, { target: { value: '太郎' } })
     fireEvent.compositionEnd(box)
+    await waitMs(500)
 
-    await waitFor(() => expect(searchApi).toHaveBeenCalled())
+    expect(searchApi).toHaveBeenCalled()
     expect(searchApi.mock.calls.at(-1)?.[0]).toBe('太郎')
   })
 
@@ -118,13 +131,13 @@ describe('SearchPage：打って検索する', () => {
   })
 
   it('51文字以上は欄の下に「検索する言葉は50文字以内で入力してください」と出し、検索しない', async () => {
-    const { user } = setup()
+    setup()
+    vi.useFakeTimers()
 
-    await user.click(searchBox())
-    await user.paste('あ'.repeat(51))
+    fireEvent.change(searchBox(), { target: { value: 'あ'.repeat(51) } })
+    await waitMs(500)
 
-    expect(await screen.findByText('検索する言葉は50文字以内で入力してください')).toBeInTheDocument()
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    expect(screen.getByText('検索する言葉は50文字以内で入力してください')).toBeInTheDocument()
     expect(searchApi).not.toHaveBeenCalled()
   })
 })
