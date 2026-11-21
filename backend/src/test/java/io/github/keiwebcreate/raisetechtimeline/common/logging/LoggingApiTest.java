@@ -134,6 +134,17 @@ class LoggingApiTest {
 		assertThat(MDC.get("userId")).isNull();
 	}
 
+	@Test
+	void API以外の住所にログイン中のCookieで来ても_利用者のIDを付箋に残さない() throws Exception {
+		Cookie access = signupAndGetAccessToken();
+
+		// API 以外の住所でも、ログインの確かめ（JwtAuthenticationFilter）は動く
+		mockMvc.perform(get("/not-api").cookie(access));
+
+		// 残っていると、同じスレッドで次に動く別の人のリクエストのログに、この人の ID が付いてしまう
+		assertThat(MDC.get("userId")).isNull();
+	}
+
 	// ===== 安全に関わる出来事（5章）と、出さないもの（6章） =====
 
 	@Test

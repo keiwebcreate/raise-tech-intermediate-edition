@@ -38,14 +38,19 @@ public class RequestLoggingFilter extends OncePerRequestFilter {
 	private static final Pattern PATTERN_RULE = Pattern.compile("\\{(\\w+):[^}]*}");
 
 	@Override
-	protected boolean shouldNotFilter(HttpServletRequest request) {
-		// API だけ（Swagger の画面などは出さない）
-		return !request.getRequestURI().startsWith("/api/");
-	}
-
-	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
+		if (!request.getRequestURI().startsWith("/api/")) {
+			// アクセスログは API だけ（Swagger の画面などは出さない）。ただし付箋は必ず外す。
+			// API 以外でもログインの確かめ（JwtAuthenticationFilter）は利用者の ID を貼るので、
+			// 外さないと、同じスレッドで次に動く別の人のリクエストのログに残ってしまう（#55 のテストで見つかった）
+			try {
+				filterChain.doFilter(request, response);
+			} finally {
+				MDC.remove(LogKeys.USER_ID);
+			}
+			return;
+		}
 		String requestId = UUID.randomUUID().toString();
 		MDC.put(LogKeys.REQUEST_ID, requestId);
 		response.setHeader(LogKeys.REQUEST_ID_HEADER, requestId);
