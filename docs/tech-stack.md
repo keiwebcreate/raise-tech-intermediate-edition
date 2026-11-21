@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.4 |
+| 版 | 0.5 |
 | 作成日 | 2026-11-08 |
 | 状態 | たたき台（ユーザーの確認待ち） |
 
@@ -50,6 +50,7 @@
 | webp-imageio（`com.github.usefulness`） | **0.11.0** | Java で WebP を書けるようにする。中に C 言語の libwebp が入っている（Windows・Linux の x86_64／aarch64 用）。Java 25 では `--enable-native-access=ALL-UNNAMED` が必要（`build.gradle` で設定） |
 | metadata-extractor | **2.22.0** | MP4 の長さ・映像の形式（H.264）を読む |
 | Adobe S3Mock | **5.2.3** | 開発・テストで S3 の代わりに動かす（Docker。テストは Testcontainers のモジュール）。MinIO は公式の Docker イメージをやめ、LocalStack は起動にアカウントのトークンが要るので使わない |
+| springdoc-openapi（`springdoc-openapi-starter-webmvc-ui`） | **3.2.0**（Spring Boot 4.1.2 に合わせた版。2026-11-21 に確認。最新の 3.2.1 は Spring Boot 4.2 用） | API 仕様書（OpenAPI）をコードから作り、Swagger UI で見せる。開くのは開発中だけ（`http://localhost:8081/swagger-ui.html`）。本番では切る |
 | JUnit・Testcontainers | Spring Boot が決める | サーバーのテスト（テスト用の PostgreSQL 18 を Docker で動かす） |
 | Checkstyle・SpotBugs | 14.4.0・4.10.5 | コードのチェック（トレロ風アプリと同じ設定。`.\gradlew.bat check` で走る） |
 
@@ -105,3 +106,4 @@
 | 0.2 | 2026-11-08 | 講義の README に合わせ、Material UI 9 と Terraform 1.17 を追加（ユーザーの判断）。HTTPS は CloudFront |
 | 0.3 | 2026-11-08 | 環境構築で実際に入れた版にした。DB の読み書きを Spring Data JPA から MyBatis に、JWT の道具に jjwt、通信に axios を追加。認証はアクセス＋リフレッシュトークン・Cookie・CSRF 有効（ユーザーの判断） |
 | 0.4 | 2026-11-08 | 画像・動画の投稿で、AWS SDK・Thumbnailator・TwelveMonkeys・webp-imageio・metadata-extractor・S3Mock を追加（版も確定） |
+| 0.5 | 2026-11-21 | API 仕様書（Swagger）のために springdoc-openapi 3.2.0 を追加 |

@@ -17,6 +17,17 @@ spring:
       max-file-size: 6MB
       max-request-size: 7MB
 
+# API 仕様書（Swagger）。本番では出さない（API の住所と送り方の一覧を、攻撃する人に見せない）。
+# 開発（application-dev.yml）とテスト（application-test.yml）でだけ true にする
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+  # ApiExceptionHandler のエラー（404・409 など）を、すべての API に自動で足さない。
+  # 返るエラーは API ごとに書く（関係のないエラーまで並ぶと、仕様書が読みにくいため）
+  override-with-generic-response: false
+
 mybatis:
   # SQL を書いた XML の場所
   mapper-locations: classpath:mapper/*.xml

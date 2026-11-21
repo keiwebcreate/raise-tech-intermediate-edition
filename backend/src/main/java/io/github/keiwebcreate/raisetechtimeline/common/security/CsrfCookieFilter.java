@@ -14,8 +14,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * すべてのレスポンスで CSRF トークンを読み込み、Cookie XSRF-TOKEN を必ず返すようにする（トレロ風アプリと同じ）。
  * Spring Security はトークンを「使うときに初めて作る」ので、GET だけのときは Cookie が返らない。
  * 画面は最初の POST（ログインなど）の前に Cookie を持っている必要があるため、ここで読み込ませる。
+ * API 仕様書の画面（SwaggerConfig）でも使う（開いた時点で Cookie を付け、最初の POST から試せるように）。
  */
-class CsrfCookieFilter extends OncePerRequestFilter {
+public class CsrfCookieFilter extends OncePerRequestFilter {
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
