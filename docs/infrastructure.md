@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.5 |
+| 版 | 0.6 |
 | 作成日 | 2026-11-08 |
 | 状態 | **現時点の案**（EC2・RDS の細かい設定は、講義に合わせて後で決める） |
 | リージョン | シドニー（ap-southeast-2）。**東京は使わない** |
@@ -86,7 +86,8 @@ flowchart LR
 | S3 | 画像・動画（投稿の画像・動画、アイコン）の保存 | バケット1つ。公開しない。暗号化。`tmp/`（選んだが投稿していない画像・動画）は1日で自動で消す（ライフサイクルの設定）。ブラウザから動画を直接送れるよう、CloudFront の住所からの PUT だけを許す（CORS の設定） |
 | IAM | 権限の管理 | EC2 にロールを付け、S3 のそのバケットと Parameter Store の読み取りだけを許す |
 | Systems Manager（Parameter Store・Session Manager） | 秘密の情報の保管、EC2 へのログイン | SSH（22番）は開けず、Session Manager で入る |
-| CloudWatch | ログ・監視 | アプリのログを送る。14日保存 |
+| CloudWatch | ログ・監視 | アプリのログを送る。14日保存（[logging.md](logging.md)）。大事な数か所（5xx・EC2 の状態・ERROR のログ・RDS の空き容量）にアラームを付ける（[operations.md](operations.md) 2章） |
+| SNS | 知らせ | アラームの知らせをメールで送る。トピック1つ。メールアドレスは Terraform の変数で渡し、Git には書かない |
 | AWS Budgets | 料金の見張り | 料金が発生しそうなときにメール |
 
 ---
@@ -166,3 +167,4 @@ flowchart LR
 | 0.3 | 2026-11-08 | HTTPS は ALB の前に置いた CloudFront で付けることにした（ユーザーの決定）。ALB は CloudFront からだけ受け付ける。独自ドメインは使わない（ユーザーの決定。ACM・Route 53 も使わない） |
 | 0.4 | 2026-11-08 | AWS は Terraform で作ることにした（講義に合わせたユーザーの判断）。未決事項から外した |
 | 0.5 | 2026-11-08 | 画像も選んだときに `tmp/` へ置く形になったので、S3 の `tmp/` の説明を直した。EC2 で WebP の道具（libwebp）が動くかは、デプロイのときに確かめる |
+| 0.6 | 2026-11-21 | 運用設計書（#57）に合わせて、CloudWatch のアラームと SNS（メールの知らせ）を足した（ユーザーの決定）。運用は [operations.md](operations.md)、障害の手順は [incident-response.md](incident-response.md) |
