@@ -17,11 +17,15 @@ import { isTooLong, queryParamOf, SEARCH_TOO_LONG, searchText } from './searchQu
 // 入力が止まってから検索するまでの時間（user-search.md 4.1）
 const DEBOUNCE_MS = 300
 
-// 読み上げ用の見出し（画面には出さない。ほかの画面と同じく、ページの名前を h1 で伝える）
+// 読み上げ用の見出し（画面には出さない。ほかの画面と同じく、ページの名前を h1 で伝える）。
+// 大きさは '1px' と文字で書く（MUI の sx では、数の 1 は「100%」の意味になる）
 const visuallyHidden = {
   position: 'absolute',
-  width: 1,
-  height: 1,
+  width: '1px',
+  height: '1px',
+  margin: '-1px',
+  padding: 0,
+  border: 0,
   overflow: 'hidden',
   clip: 'rect(0 0 0 0)',
   whiteSpace: 'nowrap',
