@@ -37,9 +37,10 @@ public record UserSearchQuery(String text) {
 		if (input.codePointCount(0, input.length()) > MAX_LENGTH) {
 			throw new FieldValidationException(FIELD, "検索する言葉は50文字以内で入力してください");
 		}
-		// 全角の「＠」や全角の空白も NFKC で半角になるので、そろえてからもう一度取り除く
+		// 先頭の「@」（全角の「＠」も）は上の withoutAt で1つだけ取ってある。ここでもう一度取ると「@@taro」が「taro」になり、
+		// 画面（searchQuery.ts の searchText）の「@taro」と食い違うので、そろえたあとは前後の空白だけ取る
 		String normalized = Normalizer.normalize(input, Normalizer.Form.NFKC).toLowerCase(Locale.ROOT);
-		return new UserSearchQuery(withoutAt(normalized));
+		return new UserSearchQuery(normalized.strip());
 	}
 
 	/** 前後の空白と、先頭の「@」（全角の「＠」も）を取り除く */

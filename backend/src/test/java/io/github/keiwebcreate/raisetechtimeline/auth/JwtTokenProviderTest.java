@@ -63,8 +63,8 @@ class JwtTokenProviderTest {
 				.encodeToString("{\"sub\":\"1\"}".getBytes(StandardCharsets.UTF_8)) + "." + parts[2];
 		assertThatThrownBy(() -> provider.parseUserId(forged)).isInstanceOf(JwtException.class);
 
-		JwtTokenProvider other = new JwtTokenProvider(properties(base64("another-key-for-raisetechtimeline-jwt-hs256!")),
-				clock);
+		String otherSecret = base64("another-key-for-raisetechtimeline-jwt-hs256!");
+		JwtTokenProvider other = new JwtTokenProvider(properties(otherSecret), clock);
 		assertThatThrownBy(() -> provider.parseUserId(other.createAccessToken(42L))).isInstanceOf(JwtException.class);
 	}
 
