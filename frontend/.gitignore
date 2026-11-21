@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# テストのカバレッジの報告（npm run test:coverage。イシュー #53）
+coverage
