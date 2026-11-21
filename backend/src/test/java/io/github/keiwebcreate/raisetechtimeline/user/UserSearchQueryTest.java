@@ -35,6 +35,18 @@ class UserSearchQueryTest {
 	}
 
 	@Test
+	void そろえたら空白だけになる言葉も_空として断る() {
+		// NBSP（改行しない空白）は Java の strip() では取れないが、NFKC でふつうの空白になる。
+		// 空のまま検索すると、全員が見つかってしまう（品質チェックで見つかった、2026-11-21）
+		for (String q : new String[] {" ", "   ", "@ ", " "}) {
+			assertThatThrownBy(() -> UserSearchQuery.of(q))
+					.as("「%s」", q)
+					.isInstanceOf(FieldValidationException.class)
+					.hasMessage("検索する言葉を入力してください");
+		}
+	}
+
+	@Test
 	void 文字数はそろえる前の言葉で数え_50文字まで() {
 		// 「㍿」は NFKC で「株式会社」（4文字）になるが、入力は50文字なのでよい
 		assertThat(UserSearchQuery.of("㍿".repeat(50)).text()).hasSize(200);

@@ -108,18 +108,26 @@ class PostApiTest {
 		long other = newUser("ほかの人");
 		long older = createPost(other, "先の投稿");
 		long newer = createPost(me, "後の投稿");
-		String body = as(me, get("/api/posts?tab=all"), null)
-				.andExpect(status().isOk())
-				.andReturn().getResponse().getContentAsString();
+		// 「すべて」タブには DB のすべての投稿が出る。投稿の日時は DB の時計で決まるので、テスト中に Docker の時計が巻き戻ると、
+		// 先に流れたほかのテストの投稿のほうが「新しい」ことになり、この2件が一覧に出てこない（2026-11-21 に起きた）。
+		// そこで、このテストの2件の日時をはっきり決めて、いちばん新しい2件にする
+		setCreatedAt(older, "now() + interval '1 hour'");
+		setCreatedAt(newer, "now() + interval '1 hour 1 second'");
 
-		// 「すべて」タブには DB のすべての投稿が出る。ほかのテストの投稿に左右されないよう、このテストの2件だけを見る
-		// （ほかのテストの投稿が一番上に来ることがある。テスト中に Docker の時計が少し巻き戻ったとき、2026-11-21）
-		List<Long> ids = ids(body);
-		assertThat(ids).contains(newer, older);
-		assertThat(ids.indexOf(newer)).as("後の投稿が先").isLessThan(ids.indexOf(older));
-		List<Boolean> mine = JsonPath.read(body, "$.posts[*].mine");
-		assertThat(mine.get(ids.indexOf(newer))).isTrue();
-		assertThat(mine.get(ids.indexOf(older))).isFalse();
+		as(me, get("/api/posts?tab=all"), null)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.posts[0].id").value(newer))
+				.andExpect(jsonPath("$.posts[0].mine").value(true))
+				.andExpect(jsonPath("$.posts[1].id").value(older))
+				.andExpect(jsonPath("$.posts[1].mine").value(false));
+		// ほかのテストに影響しないよう、日時を今に戻す
+		setCreatedAt(older, "now()");
+		setCreatedAt(newer, "now()");
+	}
+
+	/** 投稿の日時を SQL の式で決める（例：now() + interval '1 hour'）。式はこのテストの中で決めた固定の文字だけを使う */
+	private void setCreatedAt(long postId, String sqlExpression) {
+		jdbcTemplate.update("UPDATE posts SET created_at = " + sqlExpression + " WHERE id = ?", postId);
 	}
 
 	@Test

@@ -21,6 +21,8 @@ public record UserSearchQuery(String text) {
 
 	private static final String FIELD = "q";
 
+	private static final String MESSAGE_EMPTY = "検索する言葉を入力してください";
+
 	/**
 	 * 送られた言葉をそろえ、1〜50文字かを確かめる。前後の空白と、先頭の「@」は取り除く（「@taro」でも「taro」でも同じ）。
 	 *
@@ -31,7 +33,7 @@ public record UserSearchQuery(String text) {
 		// NFKC には文字が増えるものがある（「㍿」1文字 →「株式会社」4文字）ので、そろえたあとで数えると画面と食い違う
 		String input = withoutAt(raw);
 		if (input.isEmpty()) {
-			throw new FieldValidationException(FIELD, "検索する言葉を入力してください");
+			throw new FieldValidationException(FIELD, MESSAGE_EMPTY);
 		}
 		// 見た目の1文字を1文字と数える（絵文字も1文字）
 		if (input.codePointCount(0, input.length()) > MAX_LENGTH) {
@@ -39,8 +41,12 @@ public record UserSearchQuery(String text) {
 		}
 		// 先頭の「@」（全角の「＠」も）は上の withoutAt で1つだけ取ってある。ここでもう一度取ると「@@taro」が「taro」になり、
 		// 画面（searchQuery.ts の searchText）の「@taro」と食い違うので、そろえたあとは前後の空白だけ取る
-		String normalized = Normalizer.normalize(input, Normalizer.Form.NFKC).toLowerCase(Locale.ROOT);
-		return new UserSearchQuery(normalized.strip());
+		String normalized = Normalizer.normalize(input, Normalizer.Form.NFKC).toLowerCase(Locale.ROOT).strip();
+		// NBSP などは strip() では取れないが、NFKC でふつうの空白になる。空のまま検索すると全員が見つかるので、ここでも断る
+		if (normalized.isEmpty()) {
+			throw new FieldValidationException(FIELD, MESSAGE_EMPTY);
+		}
+		return new UserSearchQuery(normalized);
 	}
 
 	/** 前後の空白と、先頭の「@」（全角の「＠」も）を取り除く */

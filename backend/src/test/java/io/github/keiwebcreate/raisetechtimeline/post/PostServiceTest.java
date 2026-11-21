@@ -315,16 +315,13 @@ class PostServiceTest {
 	@SuppressWarnings("unchecked")
 	private List<String> keysPassedTo(String method) {
 		ArgumentCaptor<Collection<String>> captor = ArgumentCaptor.forClass(Collection.class);
-		List<String> keys = new ArrayList<>();
-		try {
-			if (method.equals("deleteAfterCommit")) {
-				verify(mediaService, atLeast(0)).deleteAfterCommit(captor.capture());
-			} else {
-				verify(mediaService, atLeast(0)).deleteAfterRollback(captor.capture());
-			}
-		} catch (AssertionError e) {
-			return keys;
+		// atLeast(0)：一度も呼ばれていなくても失敗しない（そのときは空の一覧）
+		if (method.equals("deleteAfterCommit")) {
+			verify(mediaService, atLeast(0)).deleteAfterCommit(captor.capture());
+		} else {
+			verify(mediaService, atLeast(0)).deleteAfterRollback(captor.capture());
 		}
+		List<String> keys = new ArrayList<>();
 		captor.getAllValues().forEach(keys::addAll);
 		return keys;
 	}
