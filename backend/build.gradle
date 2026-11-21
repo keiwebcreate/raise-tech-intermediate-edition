@@ -5,6 +5,8 @@ plugins {
 	// コードのチェック。どちらも .\gradlew.bat check で走る（トレロ風アプリと同じ道具）
 	id 'checkstyle'
 	id 'com.github.spotbugs' version '6.5.13'
+	// カバレッジ（テストが通った行・分かれ道の割合）を測る。報告は build/reports/jacoco/test/html/index.html
+	id 'jacoco'
 }
 
 group = 'io.github.keiwebcreate'
@@ -79,6 +81,23 @@ tasks.named('test') {
 	jvmArgs nativeAccess
 	// テストのときは application-test.yml も読み込む（テスト専用の JWT の鍵など。環境変数がなくても動く）
 	systemProperty 'spring.profiles.active', 'test'
+}
+
+// JaCoCo：テストのあとにカバレッジの報告を作る。目標の数字は決めない（ユーザーの決定、2026-11-21）。
+// 「テストしていない分かれ道」を見つけるために使う（講義：100% を目指さず、ロジックがある場所に集中する）
+jacoco {
+	toolVersion = '0.8.16' // 2026-11-21 に最新を確認。Java 25 に対応
+}
+
+tasks.named('test') {
+	finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport') {
+	reports {
+		html.required = true
+		xml.required = true
+	}
 }
 
 // 開発での起動（.\gradlew.bat bootRun）では、開発用の設定 application-dev.yml も読み込む

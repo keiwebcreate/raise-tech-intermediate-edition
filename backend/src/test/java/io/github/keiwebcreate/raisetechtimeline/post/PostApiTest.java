@@ -108,12 +108,26 @@ class PostApiTest {
 		long other = newUser("ほかの人");
 		long older = createPost(other, "先の投稿");
 		long newer = createPost(me, "後の投稿");
+		// 「すべて」タブには DB のすべての投稿が出る。投稿の日時は DB の時計で決まるので、テスト中に Docker の時計が巻き戻ると、
+		// 先に流れたほかのテストの投稿のほうが「新しい」ことになり、この2件が一覧に出てこない（2026-11-21 に起きた）。
+		// そこで、このテストの2件の日時をはっきり決めて、いちばん新しい2件にする
+		setCreatedAt(older, "now() + interval '1 hour'");
+		setCreatedAt(newer, "now() + interval '1 hour 1 second'");
+
 		as(me, get("/api/posts?tab=all"), null)
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.posts[0].id").value(newer))
 				.andExpect(jsonPath("$.posts[0].mine").value(true))
 				.andExpect(jsonPath("$.posts[1].id").value(older))
 				.andExpect(jsonPath("$.posts[1].mine").value(false));
+		// ほかのテストに影響しないよう、日時を今に戻す
+		setCreatedAt(older, "now()");
+		setCreatedAt(newer, "now()");
+	}
+
+	/** 投稿の日時を SQL の式で決める（例：now() + interval '1 hour'）。式はこのテストの中で決めた固定の文字だけを使う */
+	private void setCreatedAt(long postId, String sqlExpression) {
+		jdbcTemplate.update("UPDATE posts SET created_at = " + sqlExpression + " WHERE id = ?", postId);
 	}
 
 	@Test
@@ -175,15 +189,26 @@ class PostApiTest {
 		long stranger = newUser("知らない人");
 		follow(me, followed);
 		long top = createPost(me, "画面で一番上の投稿");
-		createPost(me, "自分の新しい投稿");
-		createPost(followed, "フォローした人の新しい投稿");
-		createPost(stranger, "知らない人の新しい投稿");
+		// 「すべて」タブの数には、ほかのテストの投稿が入ることがある（上のテストと同じ理由）。
+		// そこで数そのものではなく、投稿を1つ足したときに数がいくつ増えたかで確かめる
+		int start = newCount(me, "all", top);
 
-		as(me, get("/api/posts/new-count?tab=following&after=" + top), null)
+		createPost(me, "自分の新しい投稿");
+		assertThat(newCount(me, "all", top)).as("自分の投稿は数えない").isEqualTo(start);
+		createPost(followed, "フォローした人の新しい投稿");
+		assertThat(newCount(me, "all", top)).isEqualTo(start + 1);
+		createPost(stranger, "知らない人の新しい投稿");
+		assertThat(newCount(me, "all", top)).isEqualTo(start + 2);
+
+		// フォロー中タブは自分とフォローした人だけなので、ほかのテストの投稿は入らない
+		assertThat(newCount(me, "following", top)).as("フォローした人の1件だけ").isEqualTo(1);
+	}
+
+	private int newCount(long userId, String tab, long after) throws Exception {
+		String body = as(userId, get("/api/posts/new-count?tab=" + tab + "&after=" + after), null)
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.count").value(1));
-		as(me, get("/api/posts/new-count?tab=all&after=" + top), null)
-				.andExpect(jsonPath("$.count").value(2));
+				.andReturn().getResponse().getContentAsString();
+		return JsonPath.read(body, "$.count");
 	}
 
 	@Test

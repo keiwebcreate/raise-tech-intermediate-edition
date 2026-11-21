@@ -2,7 +2,7 @@
 
 | 項目 | 内容 |
 |---|---|
-| 版 | 0.5 |
+| 版 | 0.6 |
 | 作成日 | 2026-11-08 |
 | 状態 | たたき台（ユーザーの確認待ち） |
 
@@ -52,6 +52,8 @@
 | Adobe S3Mock | **5.2.3** | 開発・テストで S3 の代わりに動かす（Docker。テストは Testcontainers のモジュール）。MinIO は公式の Docker イメージをやめ、LocalStack は起動にアカウントのトークンが要るので使わない |
 | springdoc-openapi（`springdoc-openapi-starter-webmvc-ui`） | **3.2.0**（Spring Boot 4.1.2 に合わせた版。2026-11-21 に確認。最新の 3.2.1 は Spring Boot 4.2 用） | API 仕様書（OpenAPI）をコードから作り、Swagger UI で見せる。開くのは開発中だけ（`http://localhost:8081/swagger-ui.html`）。本番では切る |
 | JUnit・Testcontainers | Spring Boot が決める | サーバーのテスト（テスト用の PostgreSQL 18 を Docker で動かす） |
+| Mockito | Spring Boot が決める | 単体テストで、DB・S3 などの「にせもの」を作る（[testing.md](testing.md)） |
+| JaCoCo | **0.8.16**（2026-11-21 に最新を確認。Java 25 に対応） | サーバーのカバレッジ（テストが通った行・分かれ道の割合）の報告。目標の数字は決めない |
 | Checkstyle・SpotBugs | 14.4.0・4.10.5 | コードのチェック（トレロ風アプリと同じ設定。`.\gradlew.bat check` で走る） |
 
 ### 2.3 データベース
@@ -107,3 +109,4 @@
 | 0.3 | 2026-11-08 | 環境構築で実際に入れた版にした。DB の読み書きを Spring Data JPA から MyBatis に、JWT の道具に jjwt、通信に axios を追加。認証はアクセス＋リフレッシュトークン・Cookie・CSRF 有効（ユーザーの判断） |
 | 0.4 | 2026-11-08 | 画像・動画の投稿で、AWS SDK・Thumbnailator・TwelveMonkeys・webp-imageio・metadata-extractor・S3Mock を追加（版も確定） |
 | 0.5 | 2026-11-21 | API 仕様書（Swagger）のために springdoc-openapi 3.2.0 を追加 |
+| 0.6 | 2026-11-21 | 単体テスト（#49）のために Mockito・JaCoCo 0.8.16 を追加 |
