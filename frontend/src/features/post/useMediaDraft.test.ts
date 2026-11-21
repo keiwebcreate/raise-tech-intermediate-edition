@@ -251,9 +251,40 @@ describe('useMediaDraft：動画', () => {
 
     act(() => result.current.addVideo(mp4()))
 
-    // 長さを読むのを待つあいだは、まだ何も並んでいない（ready も true のまま）ので、キーが入るのを待つ
     await waitFor(() => expect(result.current.keys).toEqual(['tmp/1/v.mp4']))
     expect(result.current.ready).toBe(true)
+  })
+
+  it('選んだ直後（長さを読んでいる間）から並べ、投稿できない状態にする（#53 で見つかった不具合）', () => {
+    const { result } = renderHook(() => useMediaDraft())
+
+    act(() => result.current.addVideo(mp4()))
+
+    expect(result.current.kind).toBe('video')
+    expect(result.current.ready).toBe(false)
+  })
+
+  it('長すぎたときは、並べた動画を外す', async () => {
+    videoSeconds = 141
+    const { result } = renderHook(() => useMediaDraft())
+
+    act(() => result.current.addVideo(mp4()))
+
+    await waitFor(() => expect(result.current.error).toBe(MEDIA_MESSAGES.videoLimit))
+    expect(result.current.items).toEqual([])
+    expect(result.current.kind).toBeNull()
+  })
+
+  it('長さを読んでいる間に外したら、送らない', async () => {
+    const { result } = renderHook(() => useMediaDraft())
+
+    act(() => result.current.addVideo(mp4()))
+    act(() => result.current.remove(result.current.items[0].id))
+    // 長さを読み終える（loadedmetadata）まで待つ
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 10)))
+
+    expect(videoUrlApi).not.toHaveBeenCalled()
+    expect(result.current.items).toEqual([])
   })
 
   it('送るのに失敗したら「動画の送信に失敗しました」で投稿できず、retry で送り直せる', async () => {

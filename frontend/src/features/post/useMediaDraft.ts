@@ -159,20 +159,25 @@ export function useMediaDraft(initial: PostMedia[] = []): MediaDraft {
         return
       }
       const url = URL.createObjectURL(file)
+      // 長さを読む前に並べる。読んでいる間も「投稿する」「画像」を押せないようにするため
+      // （並べずに待つと、その間に動画なしで投稿したり、画像と混ぜたりできてしまう。#53 のテストで見つかった）
+      const id = crypto.randomUUID()
+      objectUrls.current.set(id, url)
+      setItems((current) => [...current, { id, kind: 'video', status: 'uploading', progress: 0, url, file }])
       void readDuration(url).then((seconds) => {
+        // 読んでいる間に外されていたら、何もしない（URL は remove で片付け済み）
+        if (!objectUrls.current.has(id)) return
         const durationError = checkVideoDuration(seconds)
         if (durationError) {
-          URL.revokeObjectURL(url)
+          release(id)
+          setItems((current) => current.filter((item) => item.id !== id))
           setError(durationError)
           return
         }
-        const id = crypto.randomUUID()
-        objectUrls.current.set(id, url)
-        setItems((current) => [...current, { id, kind: 'video', status: 'uploading', progress: 0, url, file }])
         void sendVideo(id, file)
       })
     },
-    [sendVideo],
+    [release, sendVideo],
   )
 
   const retry = useCallback(

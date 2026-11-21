@@ -165,6 +165,18 @@ describe('PostComposer：画像', () => {
     expect(onSubmit).toHaveBeenCalledWith('写真です', ['tmp/1/img2.webp'])
   })
 
+  it('動画を選んだら、長さを読んでいる間も「投稿する」と「画像を選ぶ」を押せない（4.1・画像と動画を混ぜない）', async () => {
+    // jsdom は動画を読まないので、長さを読んでいる途中のまま止まる
+    const { user, box, submit, container } = setup()
+    const videoInput = container.ownerDocument.querySelector<HTMLInputElement>('input[type=file][accept="video/mp4"]')
+
+    await user.type(box, '動画です')
+    await user.upload(videoInput!, new File(['v'], 'v.mp4', { type: 'video/mp4' }))
+
+    expect(submit).toBeDisabled()
+    expect(screen.getByRole('button', { name: '画像を選ぶ' })).toBeDisabled()
+  })
+
   it('編集のときは今の画像のキーをそのまま送り返す（post.md 8章）', async () => {
     const { user, submit, onSubmit } = setup({
       initialContent: '前の本文',
