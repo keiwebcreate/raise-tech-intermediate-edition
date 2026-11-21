@@ -20,4 +20,6 @@ export const MESSAGES = {
   profileUpdated: 'プロフィールを更新しました',
   // フォロー（docs/features/profile.md 5章）
   followFailed: 'フォローに失敗しました',
+  // ユーザー検索（docs/features/user-search.md 5章）
+  searchFailed: '検索に失敗しました',
 } as const
